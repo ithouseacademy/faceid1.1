@@ -5,7 +5,10 @@ import dj_database_url
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------------- SECURITY ----------------
-SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key-change-this")
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    "django-insecure-dev-key-change-this"
+)
 
 DEBUG = os.environ.get("DEBUG", "False") == "True"
 
@@ -48,6 +51,28 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# ---------------- ROOT ----------------
+ROOT_URLCONF = 'employee_face_recognition.urls'
+WSGI_APPLICATION = 'employee_face_recognition.wsgi.application'
+
+# ---------------- DATABASE (FIXED 100%) ----------------
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+if DATABASE_URL and DATABASE_URL.startswith("postgres"):
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600
+        )
+    }
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
+
 # ---------------- TEMPLATES ----------------
 TEMPLATES = [
     {
@@ -64,21 +89,6 @@ TEMPLATES = [
         },
     },
 ]
-
-ROOT_URLCONF = 'employee_face_recognition.urls'
-WSGI_APPLICATION = 'employee_face_recognition.wsgi.application'
-
-# ---------------- DATABASE (FIXED 100%) ----------------
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get(
-            "DATABASE_URL",
-            f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-        ),
-        conn_max_age=600,
-        ssl_require=not DEBUG
-    )
-}
 
 # ---------------- PASSWORD VALIDATION ----------------
 AUTH_PASSWORD_VALIDATORS = [
