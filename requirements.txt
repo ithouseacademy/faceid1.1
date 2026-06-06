@@ -5,3 +5,6 @@ gunicorn
 psycopg2-binary
 whitenoise
 django-cloudinary-storage
+dj-database-url
+psycopg2-binary
+gunicorn
