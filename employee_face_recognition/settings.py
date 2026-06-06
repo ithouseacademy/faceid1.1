@@ -7,8 +7,12 @@ SECRET_KEY = 'django-insecure-your-secret-key-change-this'
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = [
+    "faceid11-production.up.railway.app",
+]
+CSRF_TRUSTED_ORIGINS = [
+    "https://faceid11-production.up.railway.app",
+]
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
