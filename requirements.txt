@@ -3,3 +3,5 @@ Pillow>=10.0
 djangorestframework
 gunicorn
 psycopg2-binary
+whitenoise
+django-cloudinary-storage
