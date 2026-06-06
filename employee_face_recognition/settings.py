@@ -47,8 +47,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-ROOT_URLCONF = 'employee_face_recognition.urls'
-WSGI_APPLICATION = 'employee_face_recognition.wsgi.application'
+
 # ---------------- TEMPLATES ----------------
 TEMPLATES = [
     {
@@ -66,6 +65,7 @@ TEMPLATES = [
     },
 ]
 
+ROOT_URLCONF = 'employee_face_recognition.urls'
 WSGI_APPLICATION = 'employee_face_recognition.wsgi.application'
 
 # ---------------- DATABASE (RAILWAY FIX) ----------------
