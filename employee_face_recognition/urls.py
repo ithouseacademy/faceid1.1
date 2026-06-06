@@ -11,7 +11,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('employees.urls')),
     
-    # 🔥 PWA SERVICE WORKER
+    
     path(
         'service-worker.js',
         TemplateView.as_view(
