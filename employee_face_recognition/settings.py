@@ -3,30 +3,25 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# ⚠️ SECRET KEY (productionda .env ga chiqarish tavsiya etiladi)
 SECRET_KEY = 'django-insecure-your-secret-key-change-this'
 
-# DEBUG OFF (production)
-DEBUG = False
+DEBUG = True   # production uchun
 
-# 🌐 Allowed hosts (Railway domain)
 ALLOWED_HOSTS = [
     "faceid11-production.up.railway.app",
 ]
 
-# 🔐 CSRF settings (ENG MUHIM QISM)
+# 🔐 CSRF FIX (juda muhim)
 CSRF_TRUSTED_ORIGINS = [
     "https://faceid11-production.up.railway.app",
 ]
 
-# 🔥 Railway / reverse proxy HTTPS fix
+# 🔥 Railway HTTPS fix
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
-# 🔐 Cookie security (production uchun shart)
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
-# Installed apps
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,7 +32,6 @@ INSTALLED_APPS = [
     'employees',
 ]
 
-# Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -50,7 +44,6 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'employee_face_recognition.urls'
 
-# Templates
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -69,7 +62,7 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'employee_face_recognition.wsgi.application'
 
-# Database (SQLite)
+# SQLite
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -77,29 +70,14 @@ DATABASES = {
     }
 }
 
-# Password validation
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
+# ---------------- STATIC ----------------
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Localization
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'Asia/Tashkent'
-USE_I18N = True
-USE_TZ = True
-
-# Static files
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
-
-# Media files
-MEDIA_URL = 'media/'
+# ---------------- MEDIA (ENG MUHIM QISM) ----------------
+MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# Default primary key
+# ---------------- DEFAULT ----------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
