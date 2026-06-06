@@ -40,10 +40,6 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-
-    "cloudinary",
-    "cloudinary_storage",
-
     "employees",
 ]
 
@@ -73,7 +69,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL:
     DATABASES = {
         "default": dj_database_url.parse(
-            DATABASE_URL, conn_max_age=600, ssl_require=False
+            DATABASE_URL, conn_max_age=600
         ),
     }
 else:
@@ -147,17 +143,9 @@ CLOUDINARY_STORAGE = {
     "API_SECRET": os.environ.get("CLOUDINARY_API_SECRET"),
 }
 
-USE_CLOUDINARY = all([
-    os.environ.get("CLOUDINARY_CLOUD_NAME"),
-    os.environ.get("CLOUDINARY_API_KEY"),
-    os.environ.get("CLOUDINARY_API_SECRET"),
-])
-
 STORAGES = {
     "default": {
-        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage"
-        if USE_CLOUDINARY
-        else "django.core.files.storage.FileSystemStorage",
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
         "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
