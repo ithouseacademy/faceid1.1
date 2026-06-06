@@ -1,0 +1,909 @@
+<!-- templates/qolda_kiritilgan_xodimlar.html -->
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Qo'lda kiritilgan xodimlar - FaceEdu</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body { 
+            background: #f8f9fa; 
+            padding: 0;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        }
+        
+        /* Mobil uchun container */
+        .mobile-container {
+            width: 100%;
+            max-width: 100%;
+            padding: 15px;
+            margin: 0 auto;
+        }
+        
+        /* Header */
+        .mobile-header {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .header-title {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .header-title h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            color: #2c3e50;
+        }
+        
+        .header-title h1 i {
+            color: #6366f1;
+        }
+        
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .header-buttons .btn {
+            padding: 10px 15px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+        }
+        
+        .header-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        /* Statistika kartochkalari */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .stats-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px;
+            padding: 20px 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+        
+        .stats-card:nth-child(2) {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+        
+        .stats-card:nth-child(3) {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+        
+        .stats-card:nth-child(4) {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+        }
+        
+        .stats-card h3 {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin: 0 0 5px 0;
+        }
+        
+        .stats-card p {
+            font-size: 0.8rem;
+            margin: 0;
+            opacity: 0.9;
+        }
+        
+        /* Filter qismi */
+        .filter-section {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .filter-section label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            display: block;
+        }
+        
+        .filter-section .form-select,
+        .filter-section .form-control {
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            padding: 10px 12px;
+            font-size: 0.9rem;
+        }
+        
+        .filter-section .btn {
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 0.9rem;
+            margin-top: 24px;
+        }
+        
+        /* Rasmlar grid */
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .photo-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .photo-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
+        
+        .photo-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .photo-card:active {
+            transform: scale(0.98);
+        }
+        
+        .photo-img-container {
+            position: relative;
+            width: 100%;
+            padding-top: 100%;
+            overflow: hidden;
+            background: #f1f3f5;
+        }
+        
+        .photo-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        /* YANGI: Kelish/Chiqish badge'lari */
+        .badge-checkin {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            z-index: 2;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .badge-checkout {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            z-index: 2;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .badge-manual {
+            background: #6366f1;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 500;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 2;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .photo-info {
+            padding: 10px;
+        }
+        
+        .photo-info h6 {
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 0 0 5px 0;
+            color: #2c3e50;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .photo-meta-item {
+            font-size: 0.7rem;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .photo-meta-item i {
+            width: 12px;
+            font-size: 0.65rem;
+        }
+        
+        /* Modal (Full screen) */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-content {
+            position: relative;
+            margin: auto;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            max-width: 1200px;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            color: white;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-header .type-badge {
+            font-size: 0.9rem;
+            padding: 4px 12px;
+            border-radius: 30px;
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .modal-header .type-badge.in {
+            background: #10b981;
+        }
+        
+        .modal-header .type-badge.out {
+            background: #ef4444;
+        }
+        
+        .modal-header .close {
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .modal-header .close:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .modal-body {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .modal-body img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            color: white;
+            background: linear-gradient(to top, rgba(0,0,0,0.5), transparent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .modal-footer .info {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .modal-footer .info-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .modal-footer .info-item i {
+            color: #6366f1;
+        }
+        
+        .modal-footer .nav-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .modal-footer .nav-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+        
+        .modal-footer .nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+        
+        .modal-footer .nav-btn:active {
+            transform: scale(0.95);
+        }
+        
+        .modal-footer .nav-btn.disabled {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+        
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 15px;
+            margin-top: 20px;
+            grid-column: 1 / -1;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: #dee2e6;
+            margin-bottom: 20px;
+        }
+        
+        .empty-state h5 {
+            font-size: 1.2rem;
+            color: #495057;
+            margin-bottom: 10px;
+        }
+        
+        .empty-state p {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        
+        /* Pagination */
+        .mobile-pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 40px;
+            padding: 0 12px;
+            border-radius: 10px;
+            background: white;
+            color: #495057;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .pagination-btn.active {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .pagination-btn.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        
+        /* Loading */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(99, 102, 241, 0.1);
+            border-radius: 50%;
+            border-top-color: #6366f1;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Swipe hint */
+        .swipe-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            color: #adb5bd;
+            font-size: 0.8rem;
+            margin-top: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 50px;
+        }
+        
+        /* Filter badges */
+        .filter-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-right: 5px;
+        }
+        
+        .filter-badge.in {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .filter-badge.out {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Header -->
+        <div class="mobile-header">
+            <div class="header-title">
+                <h1>
+                    <i class="fas fa-user-secret me-2"></i>
+                    Qo'lda kiritilganlar
+                </h1>
+                <div class="header-buttons">
+                    <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-home"></i>
+                        <span class="d-none d-md-inline ms-1">Bosh Sahifa</span>
+                    </a>
+                </div>
+            </div>
+            <div class="header-description">
+                <i class="fas fa-camera me-1"></i>
+                Xodimlar qo'lda qo'shilganda olingan rasmlar (kelish/chiqish)
+            </div>
+        </div>
+
+        <!-- Statistika -->
+        <div class="stats-grid">
+            <div class="stats-card">
+                <h3>{{ total_photos|default:"0" }}</h3>
+                <p>Jami rasmlar</p>
+            </div>
+            <div class="stats-card">
+                <h3>{{ unique_employees|default:"0" }}</h3>
+                <p>Xodimlar soni</p>
+            </div>
+            <div class="stats-card">
+                <h3>{{ today_photos|default:"0" }}</h3>
+                <p>Bugun olingan</p>
+            </div>
+            <div class="stats-card">
+                <h3>{{ unique_ips|default:"0" }}</h3>
+                <p>Turli IP'lar</p>
+            </div>
+        </div>
+
+        <!-- Filter -->
+        <div class="filter-section">
+            <form method="get" class="row g-2" id="filterForm">
+                <div class="col-12 col-md-3">
+                    <label>Xodim</label>
+                    <select name="employee" class="form-select">
+                        <option value="">Barcha xodimlar</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp.id }}" {% if request.GET.employee == emp.id|stringformat:"s" %}selected{% endif %}>
+                            {{ emp.full_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label>Tur</label>
+                    <select name="type" class="form-select">
+                        <option value="">Barchasi</option>
+                        <option value="in" {% if request.GET.type == 'in' %}selected{% endif %}>Kelish ✅</option>
+                        <option value="out" {% if request.GET.type == 'out' %}selected{% endif %}>Chiqish 🚪</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label>Sanadan</label>
+                    <input type="date" name="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label>Sanagacha</label>
+                    <input type="date" name="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                </div>
+                <div class="col-6 col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-1"></i> Filtrlash
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Aktiv filterlar -->
+            {% if request.GET.type %}
+            <div class="mt-2">
+                <span class="filter-badge {% if request.GET.type == 'in' %}in{% else %}out{% endif %}">
+                    {% if request.GET.type == 'in' %}✅ Kelish{% else %}🚪 Chiqish{% endif %}
+                </span>
+                <a href="?{% if request.GET.employee %}employee={{ request.GET.employee }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}{% endif %}" class="text-muted small">Tozalash</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Rasmlar grid -->
+        <div class="photo-grid" id="photoGallery">
+            {% for photo in photos %}
+            <div class="photo-card" 
+                 data-id="{{ photo.id }}"
+                 data-src="{{ photo.photo.url }}"
+                 data-name="{{ photo.employee.full_name }}"
+                 data-position="{{ photo.employee.position|default:'Lavozim yo\'q' }}"
+                 data-type="{{ photo.attendance_type }}"
+                 data-type-display="{{ photo.type_display }}"
+                 data-time="{{ photo.captured_at|date:'d.m.Y H:i' }}"
+                 data-ip="{{ photo.ip_address|default:'Noma\'lum' }}">
+                <div class="photo-img-container">
+                    <img src="{{ photo.photo.url }}" 
+                         class="photo-img" 
+                         alt="{{ photo.employee.full_name }}"
+                         loading="lazy"
+                         onerror="this.onerror=null; this.src='https://via.placeholder.com/200?text=Rasm+topilmadi';">
+                    
+                    <!-- YANGI: Kelish/Chiqish badge'i -->
+                    {% if photo.attendance_type == 'in' %}
+                    <span class="badge-checkin">
+                        <i class="fas fa-sign-in-alt"></i> KELDI
+                    </span>
+                    {% else %}
+                    <span class="badge-checkout">
+                        <i class="fas fa-sign-out-alt"></i> CHIQDI
+                    </span>
+                    {% endif %}
+                    
+                    <span class="badge-manual">
+                        <i class="fas fa-user-edit"></i>
+                    </span>
+                </div>
+                <div class="photo-info">
+                    <h6>{{ photo.employee.full_name }}</h6>
+                    <div class="photo-meta-item">
+                        <i class="fas fa-clock"></i>
+                        <span>{{ photo.captured_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <div class="photo-meta-item">
+                        <i class="fas fa-tag"></i>
+                        <span>{{ photo.type_display }}</span>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="fas fa-camera-slash"></i>
+                <h5>Hech qanday rasm topilmadi</h5>
+                <p>Qo'lda xodim qo'shilganda rasmlar avtomatik saqlanadi</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Pagination -->
+        {% if photos.has_other_pages %}
+        <div class="mobile-pagination">
+            {% if photos.has_previous %}
+            <a href="?page=1{% if request.GET.employee %}&employee={{ request.GET.employee }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" class="pagination-btn">
+                <i class="fas fa-angle-double-left"></i>
+            </a>
+            <a href="?page={{ photos.previous_page_number }}{% if request.GET.employee %}&employee={{ request.GET.employee }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" class="pagination-btn">
+                <i class="fas fa-angle-left"></i>
+            </a>
+            {% endif %}
+
+            {% for i in photos.paginator.page_range %}
+                {% if photos.number == i %}
+                <span class="pagination-btn active">{{ i }}</span>
+                {% elif i > photos.number|add:'-3' and i < photos.number|add:'3' %}
+                <a href="?page={{ i }}{% if request.GET.employee %}&employee={{ request.GET.employee }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" class="pagination-btn">{{ i }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if photos.has_next %}
+            <a href="?page={{ photos.next_page_number }}{% if request.GET.employee %}&employee={{ request.GET.employee }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" class="pagination-btn">
+                <i class="fas fa-angle-right"></i>
+            </a>
+            <a href="?page={{ photos.paginator.num_pages }}{% if request.GET.employee %}&employee={{ request.GET.employee }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}" class="pagination-btn">
+                <i class="fas fa-angle-double-right"></i>
+            </a>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Swipe hint -->
+        <div class="swipe-hint">
+            <i class="fas fa-hand-pointer"></i>
+            <span>Rasmni bosib to'liq ekranda ko'ring</span>
+        </div>
+    </div>
+
+    <!-- Full Screen Modal -->
+    <div id="imageModal" class="modal" onclick="closeModalOnOutsideClick(event)">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">
+                    <span id="modalName"></span>
+                    <span id="modalTypeBadge" class="type-badge"></span>
+                </h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <img id="modalImage" src="" alt="Full screen image">
+            </div>
+            <div class="modal-footer">
+                <div class="info" id="modalInfo"></div>
+                <div class="nav-buttons">
+                    <button class="nav-btn" onclick="changeImage(-1)" id="prevBtn">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="nav-btn" onclick="changeImage(1)" id="nextBtn">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        // Full screen modal uchun ma'lumotlar
+        let currentIndex = 0;
+        let images = [];
+        
+        // Barcha rasmlarni yig'ish
+        document.querySelectorAll('.photo-card').forEach((card, index) => {
+            images.push({
+                id: card.dataset.id,
+                src: card.dataset.src,
+                name: card.dataset.name,
+                position: card.dataset.position,
+                type: card.dataset.type,
+                typeDisplay: card.dataset.typeDisplay,
+                time: card.dataset.time,
+                ip: card.dataset.ip
+            });
+            
+            // Rasmga bosganda modalni ochish
+            card.addEventListener('click', () => openModal(index));
+        });
+        
+        // Modalni ochish
+        function openModal(index) {
+            if (images.length === 0) return;
+            
+            currentIndex = index;
+            updateModalContent();
+            
+            const modal = document.getElementById('imageModal');
+            modal.style.display = 'flex';
+            
+            // Body ni scroll qilishni oldini olish
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // Modal kontentini yangilash
+        function updateModalContent() {
+            const image = images[currentIndex];
+            
+            document.getElementById('modalImage').src = image.src;
+            document.getElementById('modalName').textContent = image.name;
+            
+            // Type badge
+            const typeBadge = document.getElementById('modalTypeBadge');
+            typeBadge.textContent = image.typeDisplay;
+            typeBadge.className = `type-badge ${image.type === 'in' ? 'in' : 'out'}`;
+            
+            const infoHtml = `
+                <div class="info-item"><i class="fas fa-briefcase"></i> ${image.position}</div>
+                <div class="info-item"><i class="fas fa-clock"></i> ${image.time}</div>
+                <div class="info-item"><i class="fas fa-tag"></i> ${image.typeDisplay}</div>
+                <div class="info-item"><i class="fas fa-network-wired"></i> ${image.ip}</div>
+            `;
+            document.getElementById('modalInfo').innerHTML = infoHtml;
+            
+            // Navigation tugmalarini yangilash
+            document.getElementById('prevBtn').classList.toggle('disabled', currentIndex === 0);
+            document.getElementById('nextBtn').classList.toggle('disabled', currentIndex === images.length - 1);
+        }
+        
+        // Rasmni o'zgartirish
+        function changeImage(direction) {
+            const newIndex = currentIndex + direction;
+            if (newIndex >= 0 && newIndex < images.length) {
+                currentIndex = newIndex;
+                updateModalContent();
+            }
+        }
+        
+        // Modalni yopish
+        function closeModal() {
+            document.getElementById('imageModal').style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Tashqariga bosganda yopish
+        function closeModalOnOutsideClick(event) {
+            if (event.target === document.getElementById('imageModal')) {
+                closeModal();
+            }
+        }
+        
+        // Keyboard navigatsiya
+        document.addEventListener('keydown', function(e) {
+            const modal = document.getElementById('imageModal');
+            if (modal.style.display !== 'flex') return;
+            
+            if (e.key === 'ArrowLeft') {
+                changeImage(-1);
+            } else if (e.key === 'ArrowRight') {
+                changeImage(1);
+            } else if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
+        // Touch swipe (mobil uchun)
+        let touchStartX = 0;
+        let touchEndX = 0;
+        
+        document.getElementById('modalBody').addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        document.getElementById('modalBody').addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            if (touchEndX < touchStartX - swipeThreshold) {
+                // Swipe left - next image
+                changeImage(1);
+            }
+            if (touchEndX > touchStartX + swipeThreshold) {
+                // Swipe right - previous image
+                changeImage(-1);    
+            }
+        }
+          
+        // Filter form yuklanish animatsiyasi
+        const filterForm = document.getElementById('filterForm');
+        if (filterForm) {
+            filterForm.addEventListener('submit', function() {
+                const btn = this.querySelector('button[type="submit"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<span class="loading-spinner"></span> Yuklanmoqda...';
+                btn.disabled = true;
+            });
+        }
+        
+        // Rasm yuklanmasa placeholder ko'rsatish
+        document.querySelectorAll('.photo-img').forEach(img => {
+            img.onerror = function() {  
+                this.onerror = null;
+                this.src = 'https://via.placeholder.com/200?text=Rasm+topilmadi';
+            };
+        });
+        
+        // Debug uchun
+        console.log('Images loaded:', images.length);
+    </script>
+</body>
+</html>
