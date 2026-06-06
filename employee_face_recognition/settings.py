@@ -69,7 +69,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 if DATABASE_URL:
     DATABASES = {
         "default": dj_database_url.parse(
-            DATABASE_URL, conn_max_age=600
+            DATABASE_URL, conn_max_age=600, ssl_require=False
         ),
     }
 else:
@@ -154,8 +154,6 @@ STORAGES = {
 
 # ================= MEDIA =================
 
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
 
 # ================= DEFAULT AUTO FIELD =================
 
