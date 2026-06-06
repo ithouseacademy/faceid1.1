@@ -72,10 +72,11 @@ WSGI_APPLICATION = 'employee_face_recognition.wsgi.application'
 # ---------------- DATABASE (RAILWAY FIX) ----------------
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.environ.get("DATABASE_URL"),
-        conn_max_age=600
+        conn_max_age=600,
+        ssl_require=True
     )
 }
+
 
 # ---------------- PASSWORD VALIDATION ----------------
 AUTH_PASSWORD_VALIDATORS = [
