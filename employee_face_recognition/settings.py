@@ -10,7 +10,7 @@ SECRET_KEY = os.environ.get(
     "django-insecure-dev-key-change-this"
 )
 
-DEBUG = os.environ.get("DEBUG", "False") == "True"
+DEBUG = True
 
 ALLOWED_HOSTS = [
     "faceid11-production.up.railway.app",
