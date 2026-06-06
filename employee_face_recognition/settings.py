@@ -1,27 +1,31 @@
 import os
 from pathlib import Path
+import dj_database_url
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-your-secret-key-change-this'
+# ---------------- SECURITY ----------------
+SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-dev-key-change-this")
 
-DEBUG = True   # production uchun
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
 ALLOWED_HOSTS = [
     "faceid11-production.up.railway.app",
+    "127.0.0.1",
+    "localhost",
 ]
 
-# 🔐 CSRF FIX (juda muhim)
+# ---------------- CSRF / HTTPS ----------------
 CSRF_TRUSTED_ORIGINS = [
     "https://faceid11-production.up.railway.app",
 ]
 
-# 🔥 Railway HTTPS fix
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
 
+# ---------------- APPLICATIONS ----------------
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -32,6 +36,7 @@ INSTALLED_APPS = [
     'employees',
 ]
 
+# ---------------- MIDDLEWARE ----------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -45,6 +50,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'employee_face_recognition.urls'
 
+# ---------------- TEMPLATES ----------------
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -63,76 +69,51 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'employee_face_recognition.wsgi.application'
 
-import os
+# ---------------- DATABASE (RAILWAY FIX) ----------------
+DATABASES = {
+    'default': dj_database_url.config(
+        default=os.environ.get("DATABASE_URL"),
+        conn_max_age=600
+    )
+}
 
-DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL:
-    import re
-    match = re.match(r'postgres://(.+?):(.+?)@(.+?):(\d+)/(.+)', DATABASE_URL)
-    if match:
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql',
-                'NAME': match.group(5),
-                'USER': match.group(1),
-                'PASSWORD': match.group(2),
-                'HOST': match.group(3),
-                'PORT': match.group(4),
-            }
-        }
-    else:
-        DATABASES = {
-            'default': {
-                'ENGINE': 'django.db.backends.postgresql',
-                'NAME': os.environ.get('PGDATABASE', 'ithouse_faceid'),
-                'USER': os.environ.get('PGUSER', 'postgres'),
-                'PASSWORD': os.environ.get('PGPASSWORD', 'postgres'),
-                'HOST': os.environ.get('PGHOST', 'localhost'),
-                'PORT': os.environ.get('PGPORT', '5432'),
-            }
-        }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('PGDATABASE', 'ithouse_faceid'),
-            'USER': os.environ.get('PGUSER', 'postgres'),
-            'PASSWORD': os.environ.get('PGPASSWORD', 'postgres'),
-            'HOST': os.environ.get('PGHOST', 'localhost'),
-            'PORT': os.environ.get('PGPORT', '5432'),
-        }
-    }
-
-# ---------------- CLOUDINARY (ixtiyoriy) ----------------
-USE_CLOUDINARY = DATABASE_URL and os.environ.get('CLOUDINARY_CLOUD_NAME')
-if USE_CLOUDINARY:
-    INSTALLED_APPS += [
-        'cloudinary_storage',
-        'cloudinary',
-    ]
-    CLOUDINARY_STORAGE = {
-        'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
-        'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
-        'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
-    }
-
-# ---------------- STATIC ----------------
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'static']
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-
-STORAGES = {
-    'default': {
-        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage' if USE_CLOUDINARY else 'django.core.files.storage.FileSystemStorage',
+# ---------------- PASSWORD VALIDATION ----------------
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+    },
+]
+
+# ---------------- LANGUAGE / TIME ----------------
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True
+
+# ---------------- STATIC FILES ----------------
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
+
+# WhiteNoise (STATIC fix)
+STORAGES = {
     'staticfiles': {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
 }
 
-# ---------------- MEDIA (ENG MUHIM QISM) ----------------
+# ---------------- MEDIA ----------------
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# ---------------- DEFAULT ----------------
+# ---------------- DEFAULT AUTO FIELD ----------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
