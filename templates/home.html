@@ -1,488 +1,271 @@
 <!DOCTYPE html>
 <html lang="uz">
-    {% load static %}
+{% load static %}
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kirish/Chiqish - Davomat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>IT House - Kirish/Chiqish</title>
     <link rel="icon" type="image/png" href="{% static 'img/sklatlogo.png' %}">
     <link rel="apple-touch-icon" sizes="512x512" href="{% static 'img/sklatlogo.png' %}">
     <link rel="manifest" href="{% static 'manifest.json' %}">
-
-    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#10B981',
-                        secondary: '#EF4444',
-                        success: '#22C55E',
-                        warning: '#F59E0B'
-                    },
-                    borderRadius: {
-                        'none': '0px',
-                        'sm': '4px',
-                        DEFAULT: '8px',
-                        'md': '12px',
-                        'lg': '16px',
-                        'xl': '20px',
-                        '2xl': '24px',
-                        '3xl': '32px',
-                        'full': '9999px',
-                        'button': '8px'
-                    },
-                    animation: {
-                        'pulse-glow': 'pulse-glow 2s infinite',
-                        'slide-in': 'slide-in 0.3s ease-out',
-                        'slide-up': 'slide-up 0.5s ease-out',
-                        'bounce-subtle': 'bounce-subtle 0.5s ease-in-out',
-                        'fade-in': 'fade-in 0.5s ease-out',
-                        'ripple': 'ripple 0.6s linear',
-                        'confetti': 'confetti 5s ease-in-out'
-                    },
-                    keyframes: {
-                        'pulse-glow': {
-                            '0%, 100%': { 'box-shadow': '0 0 0 0 rgba(16, 185, 129, 0.3)' },
-                            '50%': { 'box-shadow': '0 0 0 10px rgba(16, 185, 129, 0)' }
-                        },
-                        'slide-in': {
-                            '0%': { transform: 'translateY(-20px)', opacity: '0' },
-                            '100%': { transform: 'translateY(0)', opacity: '1' }
-                        },
-                        'slide-up': {
-                            '0%': { transform: 'translateY(100px)', opacity: '0' },
-                            '100%': { transform: 'translateY(0)', opacity: '1' }
-                        },
-                        'bounce-subtle': {
-                            '0%, 100%': { transform: 'translateY(0)' },
-                            '50%': { transform: 'translateY(-5px)' }
-                        },
-                        'fade-in': {
-                            '0%': { opacity: '0' },
-                            '100%': { opacity: '1' }
-                        },
-                        'ripple': {
-                            '0%': { transform: 'scale(0)', opacity: '1' },
-                            '100%': { transform: 'scale(4)', opacity: '0' }
-                        },
-                        'confetti': {
-                            '0%': { transform: 'translateY(0) rotate(0deg)', opacity: '1' },
-                            '100%': { transform: 'translateY(100vh) rotate(720deg)', opacity: '0' }
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <meta name="theme-color" id="themeColor" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/remixicon/4.6.0/remixicon.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <style>
-        :where([class^="ri-"])::before { content: "\f3c2"; }
-
-        /* Custom Styles */
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.18);
+        * { -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            overflow: hidden;
         }
-
-        .neumorphic {
+        .kiosk-container {
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            text-align: center;
+        }
+        .brand {
+            margin-bottom: 40px;
+        }
+        .brand img {
+            width: 72px;
+            height: 72px;
             border-radius: 20px;
-            background: #f0f0f0;
-            box-shadow:  10px 10px 20px #d9d9d9, -10px -10px 20px #ffffff;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.3);
         }
-
-        .gradient-border {
-            position: relative;
-            background: white;
-            border-radius: 16px;
+        .brand h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #fff;
+            margin: 0;
+            letter-spacing: -0.5px;
         }
-
-        .gradient-border::after {
-            content: '';
-            position: absolute;
-            top: -2px;
-            left: -2px;
-            right: -2px;
-            bottom: -2px;
-            background: linear-gradient(45deg, #10B981, #3B82F6, #8B5CF6);
-            border-radius: 18px;
-            z-index: -1;
-            animation: rotate 3s linear infinite;
+        .brand p {
+            color: rgba(255,255,255,0.5);
+            font-size: 13px;
+            margin: 4px 0 0;
+            font-weight: 500;
         }
-
-        @keyframes rotate {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(360deg); }
+        .clock-display {
+            margin-bottom: 40px;
         }
-
-        .clock-digit {
+        .clock-display .time {
+            font-size: 64px;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1;
+            letter-spacing: 2px;
             font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 40px rgba(99, 102, 241, 0.3);
         }
-
-        .ripple-effect {
-            position: absolute;
+        .clock-display .date {
+            font-size: 15px;
+            color: rgba(255,255,255,0.5);
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        .clock-display .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 6px 16px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.7);
+            font-weight: 500;
+        }
+        .clock-display .status .dot {
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.7);
-            transform: scale(0);
-            animation: ripple 0.6s linear;
+            background: #22c55e;
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+        }
+        .kiosk-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .kiosk-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            padding: 28px 24px;
+            border-radius: 20px;
+            font-size: 22px;
+            font-weight: 700;
+            color: #fff;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            border: none;
+            cursor: pointer;
+        }
+        .kiosk-btn:active { transform: scale(0.97); }
+        .kiosk-btn i { font-size: 32px; }
+        .kiosk-btn small {
+            font-size: 13px;
+            font-weight: 400;
+            opacity: 0.8;
+            display: block;
+            margin-top: 2px;
+        }
+        .kiosk-btn .btn-text { text-align: left; }
+        .btn-checkin {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 8px 32px rgba(16, 185, 129, 0.3);
+        }
+        .btn-checkin:hover { box-shadow: 0 12px 40px rgba(16, 185, 129, 0.5); transform: translateY(-2px); }
+        .btn-checkout {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 8px 32px rgba(239, 68, 68, 0.3);
+        }
+        .btn-checkout:hover { box-shadow: 0 12px 40px rgba(239, 68, 68, 0.5); transform: translateY(-2px); }
+        .kiosk-footer {
+            color: rgba(255,255,255,0.3);
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .kiosk-footer a {
+            color: rgba(255,255,255,0.5);
+            text-decoration: none;
+        }
+        .kiosk-footer a:hover { color: rgba(255,255,255,0.8); }
+        .bg-particles {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
             pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
         }
-
-        .confetti {
+        .particle {
             position: absolute;
-            width: 10px;
-            height: 10px;
-            opacity: 0;
-            z-index: 100;
+            width: 4px;
+            height: 4px;
+            background: rgba(99, 102, 241, 0.3);
+            border-radius: 50%;
+            animation: float 20s infinite;
         }
-        @media screen and (max-width: 980px) {
-            .btnlar {
-                margin-top: 30px;
-            }
-
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-100vh) translateX(100px); opacity: 0; }
         }
+        .employees-count {
+            margin-top: 24px;
+            padding: 12px 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            color: rgba(255,255,255,0.5);
+            font-size: 13px;
+        }
+        .employees-count i { margin-right: 6px; color: rgba(99, 102, 241, 0.6); }
     </style>
 </head>
-<body class="bg-gradient-to-br from-gray-50 to-blue-50 font-sans">
-    <!-- Navigation -->
-    <nav class="fixed top-0 w-full glass-effect z-50 animate-slide-in">
-        <div class="flex items-center justify-between px-4 py-3">
-            <button class="w-10 h-10 flex items-center justify-center cursor-pointer rounded-full hover:bg-gray-100 active:scale-95 transition-all duration-200" id="backBtn">
-
-            </button>
-            <h1 class="text-lg font-semibold text-gray-900">Kirish / Chiqish</h1>
-            <button class="w-10 h-10 flex items-center justify-center cursor-pointer rounded-full hover:bg-gray-100 active:scale-95 transition-all duration-200" id="menuBtn">
-
-            </button>
+<body>
+    <div class="bg-particles" id="particles"></div>
+    <div class="kiosk-container" style="position:relative;z-index:1;">
+        <div class="brand">
+            <img src="{% static 'img/sklatlogo.png' %}" alt="IT House">
+            <h1>IT House</h1>
+            <p>Face Recognition Attendance</p>
         </div>
-    </nav>
 
-    <!-- Main Content -->
-    <main class="pt-16 pb-6 px-4">
-        <!-- Animated Time Display -->
-        <div class="text-center mb-8 animate-slide-up">
-            <div class="gradient-border p-1 mb-6">
-                <div class="bg-white rounded-2xl p-6">
-                    <div class="text-5xl font-bold text-gray-900 mb-2 clock-digit" id="currentTime">14:25</div>
-                    <div class="text-sm text-gray-600" id="currentDate">31 Yanvar 2026, Shanba</div>
-
-                    <!-- Status Indicator -->
-                    <div class="mt-4 flex items-center justify-center gap-2">
-                        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse" id="statusIndicator"></div>
-                        <span class="text-xs font-medium text-gray-700" id="statusText">Faol</span>
-                    </div>
-                </div>
+        <div class="clock-display">
+            <div class="time" id="currentTime">--:--</div>
+            <div class="date" id="currentDate"></div>
+            <div class="status">
+                <span class="dot"></span>
+                <span id="statusText">Tizim faol</span>
             </div>
         </div>
 
-        <!-- Action Buttons -->
-        <div class=" btnlar  grid grid-cols-2 gap-4 mb-8 mt-4 ">
-            <a class="bg-gradient-to-br from-green-500 to-emerald-600 text-white py-5 px-6 !rounded-button font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer relative overflow-hidden group animate-bounce-subtle hover:animate-none active:scale-95" href="{% url 'checkin' %}">
-
-                <!-- Ripple effect container -->
-
-
-                <div class="w-10 h-10 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-200">
-                    <i class="ri-login-circle-fill text-3xl"></i>
+        <div class="kiosk-buttons">
+            <a href="{% url 'checkin' %}" class="kiosk-btn btn-checkin" id="checkinBtn">
+                <i class="fas fa-sign-in-alt"></i>
+                <div class="btn-text">
+                    Kirish
+                    <small>Ishga kelishni qayd etish</small>
                 </div>
-                KIRISH
-                <div class="text-xs font-normal mt-1 opacity-80">Ishga kirish</div>
-
-        </a>
-        <a class="bg-gradient-to-br from-red-500 to-pink-600 text-white py-5 px-6 !rounded-button font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer relative overflow-hidden group animate-bounce-subtle hover:animate-none active:scale-95 animation-delay-100"" href="{% url 'checkout' %}">
-
-                <!-- Ripple effect container -->
-                <div id="checkoutRipple"></div>
-
-                <div class="w-10 h-10 flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform duration-200">
-                    <i class="ri-logout-circle-fill text-3xl"></i>
+            </a>
+            <a href="{% url 'checkout' %}" class="kiosk-btn btn-checkout" id="checkoutBtn">
+                <i class="fas fa-sign-out-alt"></i>
+                <div class="btn-text">
+                    Chiqish
+                    <small>Ishdan ketishni qayd etish</small>
                 </div>
-                CHIQISH
-                <div class="text-xs font-normal mt-1 opacity-80">Ishdan chiqish</div>
-
-        </a>
+            </a>
         </div>
 
-        <!-- Statistics Cards -->
+        <div class="employees-count">
+            <i class="fas fa-users"></i> {{ employees|length }} ta xodim
+        </div>
 
-
-        <!-- Activity History -->
-
-    </main>
-
-    <!-- Floating Action Button -->
-
-
-    <!-- Confetti Container -->
-    <div id="confettiContainer" class="fixed inset-0 pointer-events-none z-50 overflow-hidden"></div>
+        <div class="kiosk-footer">
+            &copy; {% now "Y" %} <a href="{% url 'dashboard' %}">IT House Face ID</a>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Elements
-            const checkinBtn = document.getElementById('checkinBtn');
-            const checkoutBtn = document.getElementById('checkoutBtn');
-            const checkinRipple = document.getElementById('checkinRipple');
-            const checkoutRipple = document.getElementById('checkoutRipple');
-            const currentTimeElement = document.getElementById('currentTime');
-            const currentDateElement = document.getElementById('currentDate');
-            const workHoursElement = document.getElementById('workHours');
-            const checkinCountElement = document.getElementById('checkinCount');
-            const activityList = document.getElementById('activityList');
-            const emptyActivities = document.getElementById('emptyActivities');
-            const statusIndicator = document.getElementById('statusIndicator');
-            const statusText = document.getElementById('statusText');
-            const confettiContainer = document.getElementById('confettiContainer');
-            const statsBtn = document.getElementById('statsBtn');
-            const backBtn = document.getElementById('backBtn');
-            const menuBtn = document.getElementById('menuBtn');
+            const timeEl = document.getElementById('currentTime');
+            const dateEl = document.getElementById('currentDate');
 
-            // State variables
-            let checkinTime = null;
-            let checkinCount = 0;
-            let activities = [];
-            let isCheckedIn = false;
+            const days = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
+            const months = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'];
 
-            // Ripple effect function
-            function createRipple(event, container) {
-                const ripple = document.createElement('div');
-                const rect = event.currentTarget.getBoundingClientRect();
-                const size = Math.max(rect.width, rect.height);
-                const x = event.clientX - rect.left - size / 2;
-                const y = event.clientY - rect.top - size / 2;
-
-                ripple.style.width = ripple.style.height = size + 'px';
-                ripple.style.left = x + 'px';
-                ripple.style.top = y + 'px';
-                ripple.classList.add('ripple-effect');
-
-                container.appendChild(ripple);
-
-                setTimeout(() => {
-                    ripple.remove();
-                }, 600);
-            }
-
-            // Confetti effect function
-            function createConfetti(button) {
-                const rect = button.getBoundingClientRect();
-                const colors = ['#10B981', '#3B82F6', '#8B5CF6', '#EF4444', '#F59E0B', '#EC4899'];
-
-                for (let i = 0; i < 50; i++) {
-                    const confetti = document.createElement('div');
-                    confetti.classList.add('confetti');
-
-                    // Random position
-                    const left = rect.left + rect.width / 2;
-                    const top = rect.top + rect.height / 2;
-
-                    // Random properties
-                    const color = colors[Math.floor(Math.random() * colors.length)];
-                    const size = Math.random() * 10 + 5;
-                    const duration = Math.random() * 2 + 3;
-                    const delay = Math.random() * 0.5;
-
-                    confetti.style.backgroundColor = color;
-                    confetti.style.width = `${size}px`;
-                    confetti.style.height = `${size}px`;
-                    confetti.style.left = `${left}px`;
-                    confetti.style.top = `${top}px`;
-                    confetti.style.animation = `confetti ${duration}s ease-in-out ${delay}s forwards`;
-                    confetti.style.setProperty('--random-x', (Math.random() * 200 - 100) + 'px');
-
-                    confettiContainer.appendChild(confetti);
-
-                    // Remove after animation
-                    setTimeout(() => {
-                        confetti.remove();
-                    }, (duration + delay) * 1000);
-                }
-            }
-
-            // Update time and date
-            function updateTime() {
+            function updateClock() {
                 const now = new Date();
-                const timeElement = document.getElementById('currentTime');
-                const dateElement = document.getElementById('currentDate');
-
-                const hours = now.getHours().toString().padStart(2, '0');
-                const minutes = now.getMinutes().toString().padStart(2, '0');
-                const seconds = now.getSeconds().toString().padStart(2, '0');
-
-                // Animate time change
-                if (timeElement.textContent !== `${hours}:${minutes}`) {
-                    timeElement.style.transform = 'scale(1.1)';
-                    setTimeout(() => {
-                        timeElement.style.transform = 'scale(1)';
-                    }, 150);
-                }
-
-                timeElement.textContent = `${hours}:${minutes}`;
-
-                // Date
-                const days = ['Yakshanba', 'Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba'];
-                const months = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr'];
-
-                const dayName = days[now.getDay()];
-                const day = now.getDate();
-                const month = months[now.getMonth()];
-                const year = now.getFullYear();
-
-                dateElement.textContent = `${day} ${month} ${year}, ${dayName}`;
-
-                // Update work hours if checked in
-                if (isCheckedIn && checkinTime) {
-                    const diffMs = now - checkinTime;
-                    const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
-                    const diffMins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-                    workHoursElement.textContent = `${diffHrs} soat ${diffMins} min`;
-
-                    // Update work hours element with animation
-                    workHoursElement.style.color = diffHrs >= 8 ? '#22C55E' : '#F59E0B';
-                }
+                const h = String(now.getHours()).padStart(2, '0');
+                const m = String(now.getMinutes()).padStart(2, '0');
+                const s = String(now.getSeconds()).padStart(2, '0');
+                timeEl.textContent = h + ':' + m;
+                dateEl.textContent = now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear() + ', ' + days[now.getDay()];
             }
+            updateClock();
+            setInterval(updateClock, 1000);
 
-            // Create notification
-            function createNotification(message, type = 'success') {
-                const colors = {
-                    'success': 'bg-gradient-to-r from-green-500 to-emerald-600',
-                    'error': 'bg-gradient-to-r from-red-500 to-pink-600',
-                    'info': 'bg-gradient-to-r from-blue-500 to-indigo-600',
-                    'warning': 'bg-gradient-to-r from-amber-500 to-orange-600'
-                };
-
-                const icon = {
-                    'success': 'ri-checkbox-circle-fill',
-                    'error': 'ri-error-warning-fill',
-                    'info': 'ri-information-fill',
-                    'warning': 'ri-alert-fill'
-                };
-
-                const notification = document.createElement('div');
-                notification.className = `fixed top-20 left-4 right-4 ${colors[type]} text-white px-4 py-4 rounded-xl shadow-2xl z-50 transition-all duration-300 animate-slide-in`;
-                notification.innerHTML = `
-                    <div class="flex items-center">
-                        <i class="${icon[type]} text-2xl mr-3"></i>
-                        <div class="flex-1">
-                            <p class="font-medium">${message}</p>
-                            <p class="text-xs opacity-90 mt-1">${new Date().toLocaleTimeString('uz-UZ', {hour: '2-digit', minute:'2-digit'})}</p>
-                        </div>
-                        <button class="ml-2 text-xl opacity-80 hover:opacity-100" id="closeNotification">
-                            <i class="ri-close-line"></i>
-                        </button>
-                    </div>
-                `;
-
-                document.body.appendChild(notification);
-
-                // Close button
-                notification.querySelector('#closeNotification').addEventListener('click', () => {
-                    notification.remove();
-                });
-
-                // Auto remove
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.style.transform = 'translateY(-20px)';
-                        notification.style.opacity = '0';
-                        setTimeout(() => {
-                            if (notification.parentNode) notification.remove();
-                        }, 300);
-                    }
-                }, 4000);
+            const particles = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.top = Math.random() * 100 + '%';
+                p.style.animationDelay = Math.random() * 20 + 's';
+                p.style.width = p.style.height = (Math.random() * 4 + 2) + 'px';
+                particles.appendChild(p);
             }
-
-            // Add activity to history
-            function addActivity(type, time) {
-                if (emptyActivities.parentNode) {
-                    emptyActivities.remove();
-                }
-
-                const activity = document.createElement('div');
-                activity.className = 'flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0';
-
-                const icon = type === 'checkin' ?
-                    '<i class="ri-login-circle-line text-green-500 text-xl"></i>' :
-                    '<i class="ri-logout-circle-line text-red-500 text-xl"></i>';
-
-                const text = type === 'checkin' ? 'Kirish' : 'Chiqish';
-                const color = type === 'checkin' ? 'text-green-600' : 'text-red-600';
-
-                activity.innerHTML = `
-                    <div class="flex items-center">
-                        <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mr-3">
-                            ${icon}
-                        </div>
-                        <div>
-                            <p class="font-medium text-gray-900">${text} qilindi</p>
-                            <p class="text-sm text-gray-500">${time}</p>
-                        </div>
-                    </div>
-                    <span class="font-semibold ${color}">${new Date().toLocaleTimeString('uz-UZ', {hour: '2-digit', minute:'2-digit'})}</span>
-                `;
-
-                // Add with animation
-                activity.style.opacity = '0';
-                activity.style.transform = 'translateY(10px)';
-                activityList.prepend(activity);
-
-                setTimeout(() => {
-                    activity.style.transition = 'all 0.3s ease-out';
-                    activity.style.opacity = '1';
-                    activity.style.transform = 'translateY(0)';
-                }, 10);
-
-                // Store activity
-                activities.push({type, time: new Date().toLocaleTimeString('uz-UZ', {hour: '2-digit', minute:'2-digit'})});
-
-                // Limit activities to 10
-                if (activities.length > 10) {
-                    activities.shift();
-                    if (activityList.children.length > 10) {
-                        activityList.removeChild(activityList.lastChild);
-                    }
-                }
-            }
-
-
-
-
-
-
-            // Initialize
-            updateTime();
-            setInterval(updateTime, 1000);
-            updateStatus();
-
-            // Add sample activities for demo
-            setTimeout(() => {
-                if (activities.length === 0) {
-                    const sampleTime = new Date();
-                    sampleTime.setHours(9, 0);
-
-                    addActivity('checkin', sampleTime.toLocaleTimeString('uz-UZ', {hour: '2-digit', minute:'2-digit'}));
-
-                    sampleTime.setHours(13, 30);
-                    addActivity('checkout', sampleTime.toLocaleTimeString('uz-UZ', {hour: '2-digit', minute:'2-digit'}));
-
-                    sampleTime.setHours(14, 0);
-                    addActivity('checkin', sampleTime.toLocaleTimeString('uz-UZ', {hour: '2-digit', minute:'2-digit'}));
-                }
-            }, 1000);
         });
     </script>
-    <!-- Service Worker -->
+
     <script>
         if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register("{% static 'js/service-worker.js' %}");
+            navigator.serviceWorker.register("{% static 'js/service-worker.js' %}");
         }
-      </script>
-
-
+    </script>
 </body>
-
 </html>

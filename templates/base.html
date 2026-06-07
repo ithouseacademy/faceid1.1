@@ -1,186 +1,343 @@
 <!DOCTYPE html>
 <html lang="uz">
-    {% load static %}
+{% load static %}
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}IT HOUSE FAce id{% endblock %}</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <title>{% block title %}IT House Face ID{% endblock %}</title>
     <link rel="icon" type="image/png" href="{% static 'img/sklatlogo.png' %}">
     <link rel="apple-touch-icon" sizes="512x512" href="{% static 'img/sklatlogo.png' %}">
     <link rel="manifest" href="{% static 'manifest.json' %}">
-
-
-    <!-- Bootstrap CSS -->
+    <meta name="theme-color" id="themeColor" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
-    <style>
-        .navbar-brand { font-weight: 600; }
-        .sidebar {
-            min-height: calc(100vh - 56px);
-            background: #f8f9fa;
-            border-right: 1px solid #dee2e6;
-        }
-        .sidebar .nav-link {
-            color: #495057;
-            padding: 12px 20px;
-            border-radius: 5px;
-            margin: 2px 0;
-        }
-        .sidebar .nav-link:hover {
-            background: #e9ecef;
-            color: #0d6efd;
-        }
-        .sidebar .nav-link.active {
-            background: #0d6efd;
-            color: white;
-        }
-        .main-content { padding: 20px; }
-        .stat-card {
-            border-radius: 10px;
-            border: none;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
-        .stat-card:hover { transform: translateY(-5px); }
-    </style>
-
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'dashboard' %}">
-                <i class="fas fa-fingerprint"></i> FaceEdu
-            </a>
+    {% if user.is_authenticated %}
+    <div class="app-wrapper">
+        <!-- Sidebar Overlay (mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+        <!-- SIDEBAR (desktop) -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="{% static 'img/sklatlogo.png' %}" width="40" height="40" style="border-radius: 10px;">
+                <div>
+                    <div class="sidebar-logo">IT House<small>Face Recognition</small></div>
+                    <small style="font-size:0.6875rem;color:var(--text-muted);display:block;margin-top:2px;">
+                        <i class="fas fa-user me-1"></i>{{ user.username }}
+                        {% if user.is_superuser %}
+                        · Super Admin
+                        {% elif user.is_staff %}
+                        · Admin
+                        {% elif user.profile.user_type == 'admin' %}
+                        · Admin
+                        {% elif user.profile.user_type == 'hr' %}
+                        · HR
+                        {% elif user.profile.user_type == 'manager' %}
+                        · Menejer
+                        {% else %}
+                        · Xodim
+                        {% endif %}
+                    </small>
+                </div>
+            </div>
 
-            <div class="collapse navbar-collapse" id="navbarNav">
-                {% if user.is_authenticated %}
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'dashboard' %}">
-                            <i class="fas fa-tachometer-alt"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'checkin' %}">
-                            <i class="fas fa-sign-in-alt"></i> Kelish
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'checkout' %}">
-                            <i class="fas fa-sign-out-alt"></i> Chiqish
-                        </a>
-                    </li>
-                    {% if user.is_superuser or user.is_staff %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'admin_dashboard' %}">
-                            <i class="fas fa-cog"></i> Admin
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-
-                <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle"></i> {{ user.username }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li>
-                                <a class="dropdown-item" href="{% url 'profile' %}">
-                                    <i class="fas fa-id-card"></i> Profil
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li>
-                                <a class="dropdown-item text-danger" href="{% url 'logout' %}">
-                                    <i class="fas fa-sign-out-alt"></i> Chiqish
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
+            <ul class="sidebar-nav">
+                <li class="sidebar-nav-item">
+                    <a href="{% url 'dashboard' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <i class="fas fa-chart-pie"></i> Dashboard
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{% url 'employee_list' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'employee_list' %}active{% endif %}">
+                        <i class="fas fa-users"></i> Xodimlar
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{% url 'checkin' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'checkin' or request.resolver_match.url_name == 'checkout' %}active{% endif %}">
+                        <i class="fas fa-calendar-check"></i> Davomat
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="#" class="sidebar-nav-link" onclick="toggleDropdown(event)" data-dropdown="reportsDropdown">
+                        <i class="fas fa-chart-bar"></i> Hisobotlar <i class="fas fa-chevron-down ms-auto" style="font-size:0.75rem;opacity:0.6;"></i>
+                    </a>
+                    <ul class="sidebar-dropdown" id="reportsDropdown">
+                        <li><a href="{% url 'reports' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"><i class="fas fa-circle" style="font-size:0.375rem;"></i> Davomat hisoboti</a></li>
+                        <li><a href="{% url 'daily_report' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'daily_report' %}active{% endif %}"><i class="fas fa-circle" style="font-size:0.375rem;"></i> Kunlik hisobot</a></li>
+                        <li><a href="{% url 'weekly_report' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'weekly_report' %}active{% endif %}"><i class="fas fa-circle" style="font-size:0.375rem;"></i> Haftalik hisobot</a></li>
+                        <li><a href="{% url 'monthly_report' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'monthly_report' %}active{% endif %}"><i class="fas fa-circle" style="font-size:0.375rem;"></i> Oylik hisobot</a></li>
+                    </ul>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{% url 'salary_report' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'salary_report' %}active{% endif %}">
+                        <i class="fas fa-money-bill-wave"></i> Maosh
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{% url 'add_employee' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'add_employee' or request.resolver_match.url_name == 'edit_employee' %}active{% endif %}">
+                        <i class="fas fa-camera"></i> Rasmlar
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{% url 'home' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        <i class="fas fa-face-smile"></i> Tanib olish
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{% url 'gallery' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'gallery' %}active{% endif %}">
+                        <i class="fas fa-images"></i> Galereya
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{% url 'location_list' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'location_list' %}active{% endif %}">
+                        <i class="fas fa-map-marker-alt"></i> Lokatsiyalar
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{% url 'late_monitoring' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'late_monitoring' %}active{% endif %}">
+                        <i class="fas fa-chart-line"></i> Monitoring
+                    </a>
+                </li>
+                {% if user.is_superuser or user.is_staff or user.profile.user_type in 'admin,hr' %}
+                <hr class="my-2" style="border-color:var(--border);">
+                <li class="sidebar-nav-item">
+                    <a href="{% url 'user_list' %}" class="sidebar-nav-link {% if 'user_list' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-shield-honed"></i> Admin paneli
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{% url 'cleanup_settings' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'cleanup_settings' %}active{% endif %}">
+                        <i class="fas fa-trash-alt"></i> Ma'lumotlarni tozalash
+                    </a>
+                    <a href="{% url 'force_cache_refresh' %}" class="sidebar-nav-link {% if request.resolver_match.url_name == 'force_cache_refresh' %}active{% endif %}">
+                        <i class="fas fa-sync"></i> Keshni yangilash
+                    </a>
+                </li>
                 {% endif %}
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="px-3 pb-2">
+                    <div class="theme-toggle">
+                        <button class="active" onclick="setTheme('light')"><i class="fas fa-sun"></i></button>
+                        <button onclick="setTheme('dark')"><i class="fas fa-moon"></i></button>
+                    </div>
+                </div>
+                <div class="px-3 pb-3">
+                    <a href="{% url 'password_change' %}" class="btn btn-light btn-sm w-100 mb-2" style="justify-content:center;">
+                        <i class="fas fa-key me-2"></i> Parolni o'zgartirish
+                    </a>
+                    <a href="{% url 'profile' %}" class="btn btn-light btn-sm w-100 mb-2" style="justify-content:center;">
+                        <i class="fas fa-user me-2"></i> Profil
+                    </a>
+                    <a href="{% url 'logout' %}" class="btn btn-light btn-sm w-100" style="justify-content:center;color:var(--danger);">
+                        <i class="fas fa-sign-out-alt me-2"></i> Chiqish
+                    </a>
+                </div>
             </div>
         </div>
-    </nav>
 
-    <!-- Messages -->
-    {% if messages %}
-    <div class="container mt-3">
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-    </div>
-    {% endif %}
-
-    <!-- Main Content -->
-    <div class="container-fluid">
-        <div class="row">
-            {% if user.is_authenticated %}
-            <!-- Sidebar -->
-            <div class="col-md-2 sidebar d-none d-md-block">
-                <div class="pt-3">
-                    <div class="nav flex-column">
-                        <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" href="{% url 'dashboard' %}">
-                            <i class="fas fa-tachometer-alt"></i> Dashboard
-                        </a>
-                        <a class="nav-link {% if 'check' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'checkin' %}">
-                            <i class="fas fa-clock"></i> Davomat
-                        </a>
-                        <a class="nav-link {% if 'employee' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'employee_list' %}">
-                            <i class="fas fa-users"></i> Xodimlar
-                        </a>
-                        <a class="nav-link {% if 'report' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'reports' %}">
-                            <i class="fas fa-chart-bar"></i> Kirish Chiqish Tarixi
-                        </a>
-
-
-                        {% if user.is_superuser or user.is_staff %}
-                        <hr>
-                        <h6 class="px-3 text-muted">Admin</h6>
-                        <a class="nav-link {% if 'admin' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'admin_dashboard' %}">
-                            <i class="fas fa-cog"></i> Admin Panel
-                        </a>
-                        <a class="nav-link" href="{% url 'user_list' %}">
-                            <i class="fas fa-user-cog"></i> Foydalanuvchilar
-                        </a>
-                        {% endif %}
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <!-- Top Nav (mobile) -->
+            <div class="top-nav">
+                <div class="top-nav-container">
+                    <button class="menu-toggle" onclick="toggleSidebar()"><i class="fas fa-bars"></i></button>
+                    <div class="top-logo">
+                        <img src="{% static 'img/sklatlogo.png' %}" alt="Logo" width="28" height="28" style="border-radius:6px;">
+                        <span>IT House</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <a href="{% url 'profile' %}" class="btn btn-light btn-sm btn-icon"><i class="fas fa-user"></i></a>
+                        <a href="{% url 'logout' %}" class="btn btn-light btn-sm btn-icon text-danger"><i class="fas fa-sign-out-alt"></i></a>
                     </div>
                 </div>
             </div>
+
+            <!-- Django Messages (converted to toasts via JS) -->
+            {% if messages %}
+            <div id="djangoMessages" style="display:none;">
+                {% for message in messages %}
+                <div data-toast-type="{% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'info' %}info{% else %}success{% endif %}" data-toast-message="{{ message|escapejs }}"></div>
+                {% endfor %}
+            </div>
             {% endif %}
 
-            <!-- Main Content Area -->
-            <div class="{% if user.is_authenticated %}col-md-10{% else %}col-12{% endif %} main-content">
-                {% block content %}{% endblock %}
-            </div>
+            <!-- Page Content -->
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- BOTTOM NAV (mobile) -->
+        <div class="bottom-nav d-md-none">
+            <a href="{% url 'dashboard' %}" class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-chart-pie"></i><span>Dashboard</span>
+            </a>
+            <a href="{% url 'employee_list' %}" class="nav-item {% if request.resolver_match.url_name == 'employee_list' %}active{% endif %}">
+                <i class="fas fa-users"></i><span>Xodimlar</span>
+            </a>
+            <a href="{% url 'checkin' %}" class="nav-item {% if request.resolver_match.url_name == 'checkin' or request.resolver_match.url_name == 'checkout' %}active{% endif %}">
+                <i class="fas fa-calendar-check"></i><span>Davomat</span>
+            </a>
+            <a href="{% url 'reports' %}" class="nav-item {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                <i class="fas fa-chart-bar"></i><span>Hisobotlar</span>
+            </a>
+            <a href="{% url 'gallery' %}" class="nav-item {% if request.resolver_match.url_name == 'gallery' %}active{% endif %}">
+                <i class="fas fa-images"></i><span>Galereya</span>
+            </a>
+            <a href="{% url 'user_list' %}" class="nav-item {% if request.resolver_match.url_name == 'user_list' %}active{% endif %}">
+                <i class="fas fa-shield-honed"></i><span>Admin</span>
+            </a>
         </div>
     </div>
+    {% else %}
+    <div class="container-fluid">
+        {% block guest_content %}{% endblock %}
+    </div>
+    {% endif %}
 
-    <!-- Bootstrap JS -->
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('show');
+            document.getElementById('sidebarOverlay').classList.toggle('show');
+        }
 
+        function toggleDropdown(e) {
+            e.preventDefault();
+            const target = e.currentTarget;
+            const dropdownId = target.getAttribute('data-dropdown');
+            const dropdown = document.getElementById(dropdownId);
+            const icon = target.querySelector('.fa-chevron-down');
+            if (dropdown) {
+                dropdown.classList.toggle('show');
+                if (icon) {
+                    icon.style.transform = dropdown.classList.contains('show') ? 'rotate(180deg)' : '';
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 991) {
+                    document.getElementById('sidebar')?.classList.remove('show');
+                    document.getElementById('sidebarOverlay')?.classList.remove('show');
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                const sidebar = document.getElementById('sidebar');
+                const menuToggle = document.querySelector('.menu-toggle');
+                if (window.innerWidth <= 991 && sidebar && menuToggle) {
+                    if (!sidebar.contains(e.target) && !menuToggle.contains(e.target)) {
+                        sidebar.classList.remove('show');
+                        document.getElementById('sidebarOverlay')?.classList.remove('show');
+                    }
+                }
+            });
+
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            setTheme(savedTheme);
+
+            // Open dropdown if any child is active
+            document.querySelectorAll('.sidebar-dropdown').forEach(dropdown => {
+                const hasActive = dropdown.querySelector('.sidebar-nav-link.active');
+                if (hasActive) {
+                    dropdown.classList.add('show');
+                    const parentIcon = dropdown.closest('.sidebar-nav-item')?.querySelector('.fa-chevron-down');
+                    if (parentIcon) parentIcon.style.transform = 'rotate(180deg)';
+                }
+            });
+
+            // Convert Django messages to toast notifications
+            const msgContainer = document.getElementById('djangoMessages');
+            if (msgContainer) {
+                const items = msgContainer.querySelectorAll('[data-toast-type]');
+                items.forEach((item, index) => {
+                    const type = item.getAttribute('data-toast-type');
+                    const message = item.getAttribute('data-toast-message');
+                    setTimeout(() => showToast(message, type), index * 300);
+                });
+            }
+        });
+
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            document.querySelectorAll('.theme-toggle button').forEach(btn => btn.classList.remove('active'));
+            const btns = document.querySelectorAll('.theme-toggle button');
+            if (theme === 'light') btns[0]?.classList.add('active');
+            else btns[1]?.classList.add('active');
+            document.getElementById('themeColor')?.setAttribute('content', theme === 'dark' ? '#0f172a' : '#6366f1');
+        }
+
+        function showToast(message, type = 'success', duration = 4000) {
+            const container = document.getElementById('toastContainer');
+            const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+            const toast = document.createElement('div');
+            toast.className = 'toast-item toast-' + type;
+            toast.innerHTML = '<i class="fas ' + (icons[type] || icons.info) + '"></i><span>' + message + '</span><button class="toast-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>';
+            container.appendChild(toast);
+            setTimeout(function() {
+                toast.classList.add('toast-out');
+                setTimeout(function() { toast.remove(); }, 300);
+            }, duration);
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register("{% static 'js/service-worker.js' %}");
+        }
+    </script>
     {% block extra_js %}{% endblock %}
 
-    <!-- Service Worker -->
-    <script>
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register("{% static 'js/service-worker.js' %}");
-      }
-    </script>
+    <style>
+        .sidebar-footer {
+            border-top: 1px solid var(--border);
+            padding-top: 0.75rem;
+            margin-top: auto;
+        }
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+        }
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+        }
+        .sidebar-dropdown {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .sidebar-dropdown.show {
+            max-height: 300px;
+        }
+        .sidebar-dropdown .sidebar-nav-link {
+            padding-left: 3.25rem;
+            font-size: 0.8125rem;
+        }
+        .sidebar-dropdown .sidebar-nav-link i {
+            width: auto;
+            margin-right: 8px;
+        }
+        .sidebar-nav-link .fa-chevron-down {
+            transition: transform 0.3s ease;
+        }
+    </style>
 </body>
 </html>

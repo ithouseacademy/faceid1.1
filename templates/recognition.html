@@ -1,979 +1,401 @@
 <!DOCTYPE html>
 <html lang="uz">
-    {% load static %}
+{% load static %}
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yuzni Tanib Olish - Kelish/Chiqish</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Yuzni Tanib Olish - IT House Face ID</title>
+    <link rel="icon" type="image/png" href="{% static 'img/sklatlogo.png' %}">
+    <link rel="apple-touch-icon" sizes="512x512" href="{% static 'img/sklatlogo.png' %}">
     <link rel="manifest" href="{% static 'manifest.json' %}">
-<meta name="theme-color" content="#0d6efd">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" id="themeColor" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body {
-            background: #f8f9fa;
-            padding: 20px;
-        }
-        .video-container {
-            position: relative;
-            max-width: 640px;
-            margin: 0 auto;
-            background: black;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-        video {
-            width: 100%;
-            transform: scaleX(-1);
-        }
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            transform: scaleX(-1);
-        }
-        .welcome-banner {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100px);
-            color: white;
-            padding: 15px 30px;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            z-index: 9999;
-            transition: all 0.5s ease;
-            text-align: center;
-            min-width: 300px;
-        }
-        .welcome-checkin {
-            background: linear-gradient(135deg, #10b981, #059669);
-        }
-        .welcome-checkout {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-        }
-        .welcome-banner.show {
-            transform: translateX(-50%) translateY(0);
-        }
-        #status {
-            background: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 10px;
-            text-align: center;
-            border-left: 5px solid #2563eb;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .loading { color: #2563eb; font-weight: bold; }
-        .success { color: #10b981; font-weight: bold; }
-        .error { color: #ef4444; font-weight: bold; }
-        .warning { color: #f59e0b; font-weight: bold; }
-        .attendance-badge {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-left: 5px;
-        }
-        .badge-checkin {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        .badge-checkout {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        .employee-card {
-            border-radius: 10px;
-            margin-bottom: 10px;
-            transition: all 0.3s;
-        }
-        .employee-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-        .control-buttons {
-            margin-top: 20px;
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+    <style>
+        body { background: var(--bg); font-family: 'Inter', sans-serif; margin: 0; padding: 20px; min-height: 100vh; }
+        .page-wrapper { max-width: 1200px; margin: 0 auto; }
+        .video-container { position: relative; max-width: 640px; margin: 0 auto; background: #000; border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-lg); aspect-ratio: 4/3; }
+        video { width: 100%; height: 100%; transform: scaleX(-1); display: block; object-fit: cover; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: scaleX(-1); z-index: 2; }
+        .welcome-banner { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px); color: white; padding: 16px 32px; border-radius: var(--radius); font-size: 18px; font-weight: 600; z-index: 9999; transition: all 0.5s ease; text-align: center; min-width: 300px; box-shadow: var(--shadow-xl); }
+        .welcome-checkin { background: linear-gradient(135deg, #10b981, #059669); }
+        .welcome-checkout { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .welcome-banner.show { transform: translateX(-50%) translateY(0); }
+        .status-bar { padding: 12px 16px; border-radius: var(--radius-sm); margin-bottom: 12px; text-align: center; font-size: 14px; font-weight: 500; background: var(--bg); border-left: 4px solid var(--primary); }
+        .status-bar .loading { color: var(--primary); }
+        .status-bar .success { color: var(--success); }
+        .status-bar .error { color: var(--danger); }
+        .camera-controls { display: flex; gap: 8px; margin-top: 12px; justify-content: center; }
+        .employee-card-item { padding: 12px 16px; background: var(--bg); border-radius: var(--radius); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); }
+        .scroll-area { max-height: 280px; overflow-y: auto; }
+        .attendance-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-checkin { background: var(--success-light); color: var(--success-dark); }
+        .badge-checkout { background: var(--danger-light); color: #991b1b; }
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .info-card { padding: 16px; border-radius: var(--radius); background: var(--bg); }
+        .info-card h6 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+        .info-card ul { list-style: none; padding: 0; margin: 0; }
+        .info-card li { font-size: 13px; color: var(--text); margin-bottom: 4px; }
+        .info-card li small { color: var(--text-secondary); }
+        @media (max-width: 767px) { body { padding: 12px; } .info-grid { grid-template-columns: 1fr; } }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <div class="row mb-4">
-            <div class="col-md-8">
-                <h1><i class="fas fa-camera me-2"></i>Yuzni Tanib Olish</h1>
-                <p class="text-muted">Kamerani yoqing va yuzingizni ko'rsating. Sistema avtomatik kelish yoki chiqishni aniqlaydi.</p>
+    <div class="page-wrapper">
+        <!-- Header -->
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+            <div>
+                <h1 class="h4 mb-1"><i class="fas fa-camera me-2" style="color:var(--primary);"></i>Yuzni Tanib Olish</h1>
+                <p class="text-muted small mb-0">Kamerani yoqing va yuzingizni ko'rsating. Sistema avtomatik kelish yoki chiqishni aniqlaydi.</p>
             </div>
-            <div class="col-md-4 text-end">
-                <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">
-                    <i class="fas fa-home me-1"></i> Bosh Sahifa
-                </a>
-                <a href="{% url 'reports' %}" class="btn btn-outline-success ms-2">
-                    <i class="fas fa-chart-bar me-1"></i> Hisobotlar
-                </a>
+            <div class="d-flex gap-2">
+                <a href="{% url 'dashboard' %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-home me-1"></i>Dashboard</a>
+                <a href="{% url 'reports' %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-chart-bar me-1"></i>Hisobotlar</a>
             </div>
         </div>
-        
-        <div class="row">
-            <!-- LEFT COLUMN - Camera -->
-            <div class="col-lg-8">
-                <div class="card mb-4">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0"><i class="fas fa-video me-2"></i>Kamera</h4>
-                    </div>
+
+        <div class="row g-3">
+            <!-- Left column: Camera -->
+            <div class="col-md-7">
+                <div class="card">
+                    <div class="card-header"><i class="fas fa-video me-2" style="color:var(--primary);"></i>Kamera</div>
                     <div class="card-body">
-                        <!-- Status messages -->
-                        <div id="status">
+                        <div class="status-bar" id="status">
                             <span id="statusText">Kamerani yoqish uchun "Kamerani Yoqish" tugmasini bosing</span>
                         </div>
-                        
-                        <!-- Video container -->
-                        <div class="video-container mt-3">
+                        <div class="video-container">
                             <video id="video" autoplay muted playsinline></video>
                             <canvas id="overlay"></canvas>
                         </div>
-                        
-                        <!-- Controls -->
-                        <div class="control-buttons text-center">
-                            <button id="startCamera" class="btn btn-success btn-lg">
-                                <i class="fas fa-play me-2"></i>Kamerani Yoqish
-                            </button>
-                            <button id="stopCamera" class="btn btn-danger btn-lg ms-2" disabled>
-                                <i class="fas fa-stop me-2"></i>To'xtatish
-                            </button>
+                        <div class="camera-controls">
+                            <button id="startCamera" class="btn btn-success"><i class="fas fa-play me-2"></i>Kamerani Yoqish</button>
+                            <button id="stopCamera" class="btn btn-danger" disabled><i class="fas fa-stop me-2"></i>To'xtatish</button>
                         </div>
-                        
                         <!-- Manual attendance -->
-                        <div class="card mt-4">
-                            <div class="card-header bg-secondary text-white">
-                                <h5 class="mb-0"><i class="fas fa-user-edit me-2"></i>Qo'lda Belgilash</h5>
-                            </div>
+                        <div class="card mt-3">
+                            <div class="card-header"><i class="fas fa-user-edit me-2 text-muted"></i>Qo'lda Belgilash</div>
                             <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Xodimni tanlang:</label>
-                                        <select id="manualSelect" class="form-select mb-3">
+                                <div class="row g-2">
+                                    <div class="col-md-8">
+                                        <select id="manualSelect" class="form-select">
                                             <option value="">Xodimni tanlang</option>
                                             {% for emp in employees %}
-                                            <option value="{{ emp.id }}" 
-                                                    {% if emp.id in checked_in_today %}data-checked-in="true"{% endif %}
-                                                    {% if emp.id in checked_out_today %}data-checked-out="true"{% endif %}>
-                                                {{ emp.full_name }}
-                                            </option>
+                                            <option value="{{ emp.id }}"{% if emp.id in checked_in_today %} data-checked-in="true"{% endif %}{% if emp.id in checked_out_today %} data-checked-out="true"{% endif %}>{{ emp.full_name }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Amalni tanlang:</label>
-                                        <div class="btn-group w-100" role="group">
-                                            <button id="manualCheckin" class="btn btn-success">
-                                                <i class="fas fa-sign-in-alt me-1"></i> Kelish
-                                            </button>
-                                            <button id="manualCheckout" class="btn btn-danger">
-                                                <i class="fas fa-sign-out-alt me-1"></i> Chiqish
-                                            </button>
+                                    <div class="col-md-4">
+                                        <div class="d-flex gap-2">
+                                            <button id="manualCheckin" class="btn btn-success flex-fill" style="justify-content:center;"><i class="fas fa-sign-in-alt me-1"></i>Kelish</button>
+                                            <button id="manualCheckout" class="btn btn-danger flex-fill" style="justify-content:center;"><i class="fas fa-sign-out-alt me-1"></i>Chiqish</button>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="mt-3" id="employeeStatusInfo">
-                                    <!-- Employee status will be shown here -->
-                                </div>
+                                <div id="employeeStatusInfo" class="mt-2"></div>
                             </div>
                         </div>
-                        
                         <!-- System info -->
-                        <div class="row mt-4">
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h6><i class="fas fa-cog me-2"></i>Sozlamalar</h6>
-                                        <ul class="list-unstyled mb-0">
-                                            <li><small>Aniqlik: <span id="thresholdValue">0.45</span></small></li>
-                                            <li><small>Tezlik: <span id="intervalValue">500ms</span></small></li>
-                                            <li><small>Talab: <span id="matchesValue">3 marta</span></small></li>
-                                        </ul>
-                                    </div>
-                                </div>
+                        <div class="info-grid mt-3">
+                            <div class="info-card">
+                                <h6><i class="fas fa-cog me-1"></i>Sozlamalar</h6>
+                                <ul>
+                                    <li><small>Aniqlik:</small> <span id="thresholdValue">0.45</span></li>
+                                    <li><small>Tezlik:</small> <span id="intervalValue">500ms</span></li>
+                                    <li><small>Talab:</small> <span id="matchesValue">3 marta</span></li>
+                                </ul>
                             </div>
-                            <div class="col-md-6">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h6><i class="fas fa-info-circle me-2"></i>Tizim Holati</h6>
-                                        <ul class="list-unstyled mb-0">
-                                            <li><small>Kamera: <span id="cameraStatus">❌ O'chirilgan</span></small></li>
-                                            <li><small>Modellar: <span id="modelStatus">⏳ Yuklanmagan</span></small></li>
-                                            <li><small>Xodimlar: <span id="employeeCount">{{ employees|length }} ta</span></small></li>
-                                        </ul>
-                                    </div>
-                                </div>
+                            <div class="info-card">
+                                <h6><i class="fas fa-info-circle me-1"></i>Tizim Holati</h6>
+                                <ul>
+                                    <li><small>Kamera:</small> <span id="cameraStatus">❌ O'chirilgan</span></li>
+                                    <li><small>Modellar:</small> <span id="modelStatus">⏳ Yuklanmagan</span></li>
+                                    <li><small>Xodimlar:</small> <span id="employeeCount">{{ employees|length }} ta</span></li>
+                                </ul>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- RIGHT COLUMN - Attendance lists -->
-            <div class="col-lg-4">
-                <!-- Today's check-ins -->
-                <div class="card mb-4">
-                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="fas fa-sign-in-alt me-2"></i>Bugun Kelganlar</h5>
-                        <span class="badge bg-light text-dark" id="checkinCount">
-                            {% with checkins=today_attendances %}
-                                {% if checkins %}
-                                    {% with count=0 %}
-                                        {% for att in checkins %}
-                                            {% if att.type == 'in' %}
-                                                {% with count=count|add:1 %}{% endwith %}
-                                            {% endif %}
-                                        {% endfor %}
-                                        {{ count }}
-                                    {% endwith %}
-                                {% else %}
-                                    0
-                                {% endif %}
-                            {% endwith %}
-                        </span>
-                    </div>
-                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                        <div id="checkinList">
-                            {% for att in today_attendances %}
-                                {% if att.type == 'in' %}
-                                <div class="employee-card p-3 border rounded mb-2">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>{{ att.employee.full_name }}</strong>
-                                            <div class="text-muted small">{{ att.employee.position }}</div>
-                                        </div>
-                                        <div class="text-end">
-                                            <span class="badge-checkin attendance-badge">
-                                                <i class="fas fa-clock"></i> {{ att.time }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                            {% empty %}
-                            <div class="text-center py-3">
-                                <i class="fas fa-user-clock fa-2x text-muted mb-2"></i>
-                                <p class="text-muted mb-0">Hali hech kim kelmagan</p>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
+
+            <!-- Right column: Lists -->
+            <div class="col-md-5">
+                <div class="card mb-3">
+                    <div class="card-header"><span><i class="fas fa-sign-in-alt me-2" style="color:var(--success);"></i>Bugun Kelganlar</span><span class="badge badge-ontime" id="checkinCount">0</span></div>
+                    <div class="card-body p-0"><div class="scroll-area p-3" id="checkinList">{% for att in today_attendances %}{% if att.type == 'in' %}<div class="employee-card-item"><div><strong>{{ att.employee.full_name }}</strong><div class="text-muted small">{{ att.employee.position }}</div></div><span class="badge-checkin attendance-badge"><i class="fas fa-clock"></i> {{ att.time|time:"H:i" }}</span></div>{% endif %}{% empty %}<div class="text-center py-4"><i class="fas fa-user-clock fa-3x text-muted mb-2"></i><p class="text-muted mb-0">Hali hech kim kelmagan</p></div>{% endfor %}</div></div>
                 </div>
-                
-                <!-- Today's check-outs -->
-                <div class="card mb-4">
-                    <div class="card-header bg-danger text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="fas fa-sign-out-alt me-2"></i>Bugun Chiqqanlar</h5>
-                        <span class="badge bg-light text-dark" id="checkoutCount">
-                            {% with checkouts=today_attendances %}
-                                {% if checkouts %}
-                                    {% with count=0 %}
-                                        {% for att in checkouts %}
-                                            {% if att.type == 'out' %}
-                                                {% with count=count|add:1 %}{% endwith %}
-                                            {% endif %}
-                                        {% endfor %}
-                                        {{ count }}
-                                    {% endwith %}
-                                {% else %}
-                                    0
-                                {% endif %}
-                            {% endwith %}
-                        </span>
-                    </div>
-                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                        <div id="checkoutList">
-                            {% for att in today_attendances %}
-                                {% if att.type == 'out' %}
-                                <div class="employee-card p-3 border rounded mb-2">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>{{ att.employee.full_name }}</strong>
-                                            <div class="text-muted small">{{ att.employee.position }}</div>
-                                        </div>
-                                        <div class="text-end">
-                                            <span class="badge-checkout attendance-badge">
-                                                <i class="fas fa-clock"></i> {{ att.time }}
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                                {% endif %}
-                            {% empty %}
-                            <div class="text-center py-3">
-                                <i class="fas fa-door-open fa-2x text-muted mb-2"></i>
-                                <p class="text-muted mb-0">Hali hech kim chiqmagan</p>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
+                <div class="card mb-3">
+                    <div class="card-header"><span><i class="fas fa-sign-out-alt me-2" style="color:var(--danger);"></i>Bugun Chiqqanlar</span><span class="badge badge-early" id="checkoutCount">0</span></div>
+                    <div class="card-body p-0"><div class="scroll-area p-3" id="checkoutList">{% for att in today_attendances %}{% if att.type == 'out' %}<div class="employee-card-item"><div><strong>{{ att.employee.full_name }}</strong><div class="text-muted small">{{ att.employee.position }}</div></div><span class="badge-checkout attendance-badge"><i class="fas fa-clock"></i> {{ att.time|time:"H:i" }}</span></div>{% endif %}{% empty %}<div class="text-center py-4"><i class="fas fa-door-open fa-3x text-muted mb-2"></i><p class="text-muted mb-0">Hali hech kim chiqmagan</p></div>{% endfor %}</div></div>
                 </div>
-                
-                <!-- Recent activity log -->
                 <div class="card">
-                    <div class="card-header bg-info text-white">
-                        <h5 class="mb-0"><i class="fas fa-history me-2"></i>So'nggi Harakatlar</h5>
-                    </div>
-                    <div class="card-body" style="max-height: 250px; overflow-y: auto;">
-                        <div id="detectionLog">
-                            <div class="text-center text-muted small py-3">
-                                <i class="fas fa-info-circle me-1"></i>
-                                Hech qanday harakat yo'q
-                            </div>
-                        </div>
-                    </div>
+                    <div class="card-header"><i class="fas fa-history me-2" style="color:var(--primary);"></i>So'nggi Harakatlar</div>
+                    <div class="card-body p-0"><div class="scroll-area p-3" id="detectionLog"><div class="text-center py-4"><i class="fas fa-info-circle fa-2x text-muted mb-2"></i><p class="text-muted small mb-0">Hech qanday harakat yo'q</p></div></div></div>
                 </div>
             </div>
         </div>
     </div>
-    
-    <!-- Welcome Banners -->
-    <div id="welcomeBanner" class="welcome-banner">
-        <i class="fas fa-check-circle me-2"></i>
-        <span id="welcomeMessage"></span>
-    </div>
-    
+
+    <!-- Welcome Banner -->
+    <div id="welcomeBanner" class="welcome-banner"><i class="fas fa-check-circle me-2"></i><span id="welcomeMessage"></span></div>
     <!-- Audio -->
     <audio id="beepCheckin" src="https://assets.mixkit.co/sfx/preview/mixkit-correct-answer-tone-2870.mp3" preload="auto"></audio>
     <audio id="beepCheckout" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3" preload="auto"></audio>
     <audio id="errorSound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3" preload="auto"></audio>
-    
+
     <script>
-        // ============ KONFIGURATSIYA ============
-        const CONFIG = {
-            MODEL_URL: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights/',
-            THRESHOLD: 0.45,
-            REQUIRED_MATCHES: 3,
-            DETECTION_INTERVAL: 500,
-            STABLE_TIME: 2000,
-            MIN_CONFIDENCE: 0.5
-        };
-        
-        // ============ O'ZGARUVCHILAR ============
-        let faceMatcher = null;
-        let recognitionActive = false;
-        let detectionInterval = null;
-        let lastSeen = {};
-        let employeeDescriptors = [];
-        let videoStream = null;
-        
-        // ============ DOM ELEMENTLARI ============
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('overlay');
-        const ctx = canvas.getContext('2d');
-        const startBtn = document.getElementById('startCamera');
-        const stopBtn = document.getElementById('stopCamera');
-        const statusText = document.getElementById('statusText');
-        const manualSelect = document.getElementById('manualSelect');
-        
-        // ============ FUNKSIYALAR ============
-        
-        // Status yangilash
-        function updateStatus(text, type = 'info') {
-            statusText.textContent = text;
-            statusText.className = type;
-            console.log(`[Status] ${text}`);
+        // ============ CONFIG ============
+        const CONFIG = { MODEL_URL: 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights/', THRESHOLD: 0.45, REQUIRED_MATCHES: 3, DETECTION_INTERVAL: 500, STABLE_TIME: 2000, MIN_CONFIDENCE: 0.5 };
+
+        // ============ STATE ============
+        let faceMatcher = null, recognitionActive = false, detectionInterval = null, lastSeen = {}, employeeDescriptors = [], videoStream = null;
+
+        // ============ DOM ============
+        const video = document.getElementById('video'), canvas = document.getElementById('overlay'), ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startCamera'), stopBtn = document.getElementById('stopCamera');
+        const statusText = document.getElementById('statusText'), manualSelect = document.getElementById('manualSelect');
+
+        // ============ FUNCTIONS ============
+        function updateStatus(text, type) { statusText.textContent = text; statusText.className = type || 'info'; }
+
+        function addLog(msg, type) {
+            const log = document.getElementById('detectionLog');
+            if (log.children.length === 1 && log.children[0].classList.contains('text-center')) log.innerHTML = '';
+            const e = document.createElement('div');
+            e.className = 'mb-2 p-2 border-start border-3 border-' + (type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info');
+            e.innerHTML = '<div class="d-flex justify-content-between"><small><strong>' + msg + '</strong></small><small class="text-muted">' + new Date().toLocaleTimeString('uz-UZ', {hour:'2-digit',minute:'2-digit'}) + '</small></div>';
+            log.prepend(e);
+            while (log.children.length > 8) log.removeChild(log.lastChild);
         }
-        
-        // Log qo'shish
-        function addLog(message, type = 'info') {
-            const logDiv = document.getElementById('detectionLog');
-            
-            // Agar bo'sh bo'lsa, o'chirish
-            if (logDiv.children.length === 1 && logDiv.children[0].classList.contains('text-center')) {
-                logDiv.innerHTML = '';
-            }
-            
-            const logEntry = document.createElement('div');
-            logEntry.className = `mb-2 p-2 border-start border-${getBorderColor(type)} border-3`;
-            logEntry.innerHTML = `
-                <div class="d-flex justify-content-between">
-                    <small><strong>${message}</strong></small>
-                    <small class="text-muted">${new Date().toLocaleTimeString('uz-UZ', {hour: '2-digit', minute:'2-digit'})}</small>
-                </div>
-            `;
-            logDiv.prepend(logEntry);
-            
-            // Faqat oxirgi 8 ta xabarni saqlash
-            while (logDiv.children.length > 8) {
-                logDiv.removeChild(logDiv.lastChild);
-            }
-        }
-        
-        function getBorderColor(type) {
-            switch(type) {
-                case 'success': return 'success';
-                case 'error': return 'danger';
-                case 'warning': return 'warning';
-                default: return 'info';
-            }
-        }
-        
-        // Modellarni yuklash
+
         async function loadFaceModels() {
             updateStatus('Face modellar yuklanmoqda...', 'loading');
-            addLog('Face API modellari yuklanmoqda...');
-            
             try {
-                await Promise.all([
-                    faceapi.nets.tinyFaceDetector.loadFromUri(CONFIG.MODEL_URL),
-                    faceapi.nets.faceLandmark68Net.loadFromUri(CONFIG.MODEL_URL),
-                    faceapi.nets.faceRecognitionNet.loadFromUri(CONFIG.MODEL_URL),
-                    faceapi.nets.ssdMobilenetv1.loadFromUri(CONFIG.MODEL_URL)
-                ]);
-                
-                updateStatus('✅ Modellar muvaffaqiyatli yuklandi', 'success');
-                addLog('Face API modellari yuklandi', 'success');
+                await Promise.all([faceapi.nets.tinyFaceDetector.loadFromUri(CONFIG.MODEL_URL), faceapi.nets.faceLandmark68Net.loadFromUri(CONFIG.MODEL_URL), faceapi.nets.faceRecognitionNet.loadFromUri(CONFIG.MODEL_URL), faceapi.nets.ssdMobilenetv1.loadFromUri(CONFIG.MODEL_URL)]);
+                updateStatus('✅ Modellar yuklandi', 'success');
                 document.getElementById('modelStatus').innerHTML = '✅ Yuklandi';
-                
                 return true;
-            } catch (error) {
-                updateStatus(`❌ Modellar yuklanmadi: ${error.message}`, 'error');
-                addLog(`Modellar yuklanmadi: ${error.message}`, 'error');
-                return false;
-            }
+            } catch (e) { updateStatus('❌ Modellar yuklanmadi', 'error'); return false; }
         }
-        
-        // Xodim rasmlarini yuklash
+
         async function loadEmployeeDescriptors() {
-            updateStatus('Xodim rasmlari yuklanmoqda...', 'loading');
-            
-            // Django'dan ma'lumotlarni olish
-            const employees = [
-                {% for emp in employees %}
-                {
-                    id: {{ emp.id }},
-                    name: "{{ emp.full_name|escapejs }}",
-                    photo_url: "{% if emp.photo %}{{ emp.photo.url }}{% endif %}"
-                },
-                {% endfor %}
-            ];
-            
-            if (employees.length === 0) {
-                updateStatus('❌ Hech qanday xodim topilmadi', 'error');
-                return [];
-            }
-            
-            const labeledDescriptors = [];
-            let loadedCount = 0;
-            
+            const employees = [{% for emp in employees %}{ id: {{ emp.id }}, name: "{{ emp.full_name|escapejs }}", photo_url: "{% if emp.photo %}{{ emp.photo.url }}{% endif %}" },{% endfor %}];
+            if (!employees.length) { updateStatus('❌ Xodim topilmadi', 'error'); return []; }
+            const labeled = []; let count = 0;
             for (const emp of employees) {
-                if (!emp.photo_url || emp.photo_url === "") {
-                    addLog(`${emp.name}: Rasm yo'q`, 'warning');
-                    continue;
-                }
-                
+                if (!emp.photo_url) { addLog(emp.name + ': Rasm yo\'q', 'warning'); continue; }
                 try {
                     const img = await faceapi.fetchImage(emp.photo_url);
-                    const detections = await faceapi
-                        .detectAllFaces(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
-                        .withFaceLandmarks()
-                        .withFaceDescriptors();
-                    
-                    if (detections.length > 0) {
-                        const descriptors = detections.map(d => d.descriptor);
-                        labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(emp.name, descriptors));
-                        loadedCount++;
-                        addLog(`${emp.name}: ${detections.length} ta yuz aniqlandi`, 'success');
-                    } else {
-                        addLog(`${emp.name}: Yuz aniqlanmadi`, 'warning');
-                    }
-                } catch (error) {
-                    addLog(`${emp.name}: Rasm yuklanmadi - ${error.message}`, 'error');
-                }
+                    const det = await faceapi.detectAllFaces(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 })).withFaceLandmarks().withFaceDescriptors();
+                    if (det.length) { labeled.push(new faceapi.LabeledFaceDescriptors(emp.name, det.map(function(d) { return d.descriptor; }))); count++; addLog(emp.name + ': ' + det.length + ' ta yuz', 'success'); }
+                    else { addLog(emp.name + ': Yuz aniqlanmadi', 'warning'); }
+                } catch (e) { addLog(emp.name + ': Rasm yuklanmadi', 'error'); }
             }
-            
-            updateStatus(`✅ ${loadedCount} ta xodimning rasmlari yuklandi`, 'success');
-            return labeledDescriptors;
+            updateStatus('✅ ' + count + ' ta xodim yuklandi', 'success');
+            return labeled;
         }
-        
-        // Kamerani ishga tushirish
+
         async function startCamera() {
             updateStatus('Kamera ochilmoqda...', 'loading');
-            addLog('Kamera ochilmoqda...');
-            
             try {
-                const constraints = {
-                    video: {
-                        width: { ideal: 640 },
-                        height: { ideal: 480 },
-                        facingMode: "user",
-                        frameRate: { ideal: 30 }
-                    }
-                };
-                
-                videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 } });
                 video.srcObject = videoStream;
-                
-                video.onloadedmetadata = () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    
+                video.onloadedmetadata = function() {
+                    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
                     updateStatus('✅ Kamera ochildi', 'success');
                     document.getElementById('cameraStatus').innerHTML = '✅ Yoqilgan';
-                    
-                    startBtn.disabled = true;
-                    stopBtn.disabled = false;
-                    
+                    startBtn.disabled = true; stopBtn.disabled = false;
                     startFaceRecognition();
                 };
-                
-                video.onerror = (error) => {
-                    updateStatus(`❌ Video xatosi: ${error.message}`, 'error');
-                };
-                
             } catch (error) {
-                updateStatus(`❌ Kamera xatosi: ${error.message}`, 'error');
-                addLog(`Kamera xatosi: ${error.message}`, 'error');
-                
-                if (error.name === 'NotAllowedError') {
-                    alert('Iltimos, kameraga ruxsat bering!');
-                } else if (error.name === 'NotFoundError') {
-                    alert('Kamera topilmadi! Kamerangiz ulanganligini tekshiring.');
-                }
+                updateStatus('❌ Kamera xatosi: ' + error.message, 'error');
+                if (error.name === 'NotAllowedError') alert('Iltimos, kameraga ruxsat bering!');
             }
         }
-        
-        // Face recognition boshlash
+
         async function startFaceRecognition() {
             if (recognitionActive) return;
-            
-            updateStatus('Yuz aniqlash boshlandi...', 'loading');
-            addLog('Yuz aniqlash tizimi ishga tushdi');
-            
-            // Modellarni yuklash
-            const modelsLoaded = await loadFaceModels();
-            if (!modelsLoaded) return;
-            
-            // Xodim descriptor'larini yuklash
+            if (!(await loadFaceModels())) return;
             employeeDescriptors = await loadEmployeeDescriptors();
-            if (employeeDescriptors.length === 0) {
-                updateStatus('❌ Hech qanday xodim rasmi yuklanmadi', 'error');
-                return;
-            }
-            
-            // FaceMatcher yaratish
+            if (!employeeDescriptors.length) { updateStatus('❌ Xodim rasmlari yuklanmadi', 'error'); return; }
             faceMatcher = new faceapi.FaceMatcher(employeeDescriptors, CONFIG.THRESHOLD);
-            
-            // Aniqlashni boshlash
             recognitionActive = true;
             updateStatus('🔍 Yuzlarni aniqlash boshlandi...', 'success');
-            
             detectionInterval = setInterval(detectFaces, CONFIG.DETECTION_INTERVAL);
         }
-        
-        // Yuzlarni aniqlash
+
         async function detectFaces() {
             if (!recognitionActive || !videoStream) return;
-            
             try {
-                const detections = await faceapi
-                    .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ 
-                        inputSize: 320,
-                        scoreThreshold: CONFIG.MIN_CONFIDENCE 
-                    }))
-                    .withFaceLandmarks()
-                    .withFaceDescriptors();
-                
+                const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: CONFIG.MIN_CONFIDENCE })).withFaceLandmarks().withFaceDescriptors();
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                
-                const resizedDetections = faceapi.resizeResults(detections, {
-                    width: canvas.width,
-                    height: canvas.height
-                });
-                
-                // Agar yuz aniqlanmasa
-                if (resizedDetections.length === 0) {
-                    ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                    ctx.fillRect(10, 10, 250, 50);
-                    ctx.fillStyle = 'white';
-                    ctx.font = '16px Arial';
-                    ctx.fillText('📷 Kamera oldiga o\'ting', 20, 35);
-                    ctx.fillText('Yuzingiz aniq ko\'rinsin', 20, 55);
+                const resized = faceapi.resizeResults(detections, { width: canvas.width, height: canvas.height });
+                if (!resized.length) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.7)'; ctx.fillRect(10, 10, 250, 50);
+                    ctx.fillStyle = 'white'; ctx.font = '16px Arial';
+                    ctx.fillText('📷 Kamera oldiga o\'ting', 20, 35); ctx.fillText('Yuzingiz aniq ko\'rinsin', 20, 55);
                     return;
                 }
-                
-                // Har bir yuz uchun
-                resizedDetections.forEach(detection => {
-                    const box = detection.detection.box;
-                    const bestMatch = faceMatcher.findBestMatch(detection.descriptor);
-                    
-                    // Reng tanlash
-                    let color = '#ef4444'; // default - noma'lum
-                    if (bestMatch.label !== 'unknown' && bestMatch.distance < CONFIG.THRESHOLD) {
-                        color = '#22c55e'; // tanib olindi - yashil
-                    }
-                    
-                    // To'rtburchak chizish
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(box.x, box.y, box.width, box.height);
-                    
-                    // Matn uchun fon
+                resized.forEach(function(det) {
+                    const box = det.detection.box, match = faceMatcher.findBestMatch(det.descriptor);
+                    let color = '#ef4444';
+                    if (match.label !== 'unknown' && match.distance < CONFIG.THRESHOLD) color = '#22c55e';
+                    ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.strokeRect(box.x, box.y, box.width, box.height);
                     ctx.fillStyle = 'rgba(0,0,0,0.7)';
-                    const textWidth = ctx.measureText(bestMatch.label).width + 40;
-                    ctx.fillRect(box.x, box.y - 30, Math.max(textWidth, box.width), 30);
-                    
-                    // Ism va ishonch darajasi
-                    ctx.fillStyle = 'white';
-                    ctx.font = '14px Arial';
-                    const labelText = bestMatch.label !== 'unknown' 
-                        ? `${bestMatch.label} (${bestMatch.distance.toFixed(2)})`
-                        : 'Noma\'lum';
-                    ctx.fillText(labelText, box.x + 5, box.y - 10);
-                    
-                    // Agar tanib olingan bo'lsa
-                    if (bestMatch.label !== 'unknown' && bestMatch.distance < CONFIG.THRESHOLD) {
-                        handleRecognition(bestMatch.label);
-                    }
+                    var tw = ctx.measureText(match.label).width + 40;
+                    ctx.fillRect(box.x, box.y - 30, Math.max(tw, box.width), 30);
+                    ctx.fillStyle = 'white'; ctx.font = '14px Arial';
+                    var label = match.label !== 'unknown' ? match.label + ' (' + match.distance.toFixed(2) + ')' : 'Noma\'lum';
+                    ctx.fillText(label, box.x + 5, box.y - 10);
+                    if (match.label !== 'unknown' && match.distance < CONFIG.THRESHOLD) handleRecognition(match.label);
                 });
-                
-            } catch (error) {
-                console.error('Detection error:', error);
-                addLog(`Aniqlash xatosi: ${error.message}`, 'error');
+            } catch (error) { console.error('Detection error:', error); }
+        }
+
+        function handleRecognition(name) {
+            var now = Date.now();
+            if (!lastSeen[name]) lastSeen[name] = [];
+            lastSeen[name] = lastSeen[name].filter(function(t) { return now - t < CONFIG.STABLE_TIME; });
+            lastSeen[name].push(now);
+            if (lastSeen[name].length >= CONFIG.REQUIRED_MATCHES) {
+                determineAttendanceType(name);
+                lastSeen[name] = [];
             }
         }
-        
-        // Tanib olingan yuzni qayd etish
-        function handleRecognition(employeeName) {
-            const now = Date.now();
-            
-            if (!lastSeen[employeeName]) {
-                lastSeen[employeeName] = [];
+
+        function determineAttendanceType(name) {
+            var id = null, opt = null;
+            for (var i = 0; i < manualSelect.options.length; i++) {
+                if (manualSelect.options[i].text === name) { id = manualSelect.options[i].value; opt = manualSelect.options[i]; break; }
             }
-            
-            // Eski yozuvlarni tozalash
-            lastSeen[employeeName] = lastSeen[employeeName].filter(time => now - time < CONFIG.STABLE_TIME);
-            lastSeen[employeeName].push(now);
-            
-            // Kerakli miqdordagi mos kelishlar
-            if (lastSeen[employeeName].length >= CONFIG.REQUIRED_MATCHES) {
-                determineAttendanceType(employeeName);
-                lastSeen[employeeName] = [];
-            }
+            if (!id) { addLog(name + ': ID topilmadi', 'error'); return; }
+            var isIn = opt.getAttribute('data-checked-in') === 'true';
+            var isOut = opt.getAttribute('data-checked-out') === 'true';
+            if (!isIn && !isOut) { markAttendance(id, 'in', name); opt.setAttribute('data-checked-in', 'true'); }
+            else if (isIn && !isOut) { markAttendance(id, 'out', name); opt.setAttribute('data-checked-out', 'true'); }
+            else { updateStatus(name + ' allaqachon ishdan chiqdi', 'warning'); showWelcome(name + ' allaqachon ishdan chiqdi', 'checkout'); addLog(name + ': Allaqachon chiqib ketgan', 'warning'); }
         }
-        
-        // Kelish yoki chiqish aniqlash
-        function determineAttendanceType(employeeName) {
-            // Employee ID ni topish
-            let employeeId = null;
-            let foundOption = null;
-            
-            for (let option of manualSelect.options) {
-                if (option.text === employeeName) {
-                    employeeId = option.value;
-                    foundOption = option;
-                    break;
-                }
-            }
-            
-            if (!employeeId) {
-                addLog(`${employeeName}: ID topilmadi`, 'error');
-                return;
-            }
-            
-            // Option'dan ma'lumot olish
-            const isCheckedIn = foundOption.getAttribute('data-checked-in') === 'true';
-            const isCheckedOut = foundOption.getAttribute('data-checked-out') === 'true';
-            
-            if (!isCheckedIn && !isCheckedOut) {
-                // Kelish
-                markAttendance(employeeId, 'in', employeeName);
-                foundOption.setAttribute('data-checked-in', 'true');
-            } else if (isCheckedIn && !isCheckedOut) {
-                // Chiqish
-                markAttendance(employeeId, 'out', employeeName);
-                foundOption.setAttribute('data-checked-out', 'true');
-                foundOption.setAttribute('data-checked-in', 'false');
-            } else {
-                // Allaqachon chiqib ketgan
-                updateStatus(`${employeeName} allaqachon ishdan chiqdi`, 'warning');
-                showWelcome(`${employeeName} allaqachon ishdan chiqdi`, 'checkout');
-                addLog(`${employeeName}: Allaqachon chiqib ketgan`, 'warning');
-            }
-        }
-        
-        // Serverga kelish/chiqish yuborish
-        function markAttendance(employeeId, attendanceType, employeeName = null) {
+
+        function markAttendance(id, type, name) {
             fetch('/mark-attendance/', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': getCookie('csrftoken')
-                },
-                body: JSON.stringify({ 
-                    employee_id: employeeId,
-                    type: attendanceType 
-                })
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+                body: JSON.stringify({ employee_id: id, type: type })
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
                 if (data.status === 'success') {
-                    // Audio
-                    if (attendanceType === 'in') {
-                        document.getElementById('beepCheckin').play();
-                    } else {
-                        document.getElementById('beepCheckout').play();
-                    }
-                    
-                    // Jadvalni yangilash
+                    if (type === 'in') document.getElementById('beepCheckin').play();
+                    else document.getElementById('beepCheckout').play();
                     updateAttendanceTable(data);
-                    
-                    // Welcome banner
-                    const message = attendanceType === 'in' 
-                        ? `👋 Xush kelibsiz, ${data.employee_name}!` 
-                        : `👋 Xayr, ${data.employee_name}! Rahmat!`;
-                    const bannerType = attendanceType === 'in' ? 'checkin' : 'checkout';
-                    showWelcome(message, bannerType);
-                    
-                    // Status
-                    updateStatus(`${data.employee_name} ${data.type_display} qayd etildi`, 'success');
-                    addLog(`${data.employee_name} ${data.type_display.toLowerCase()}i: ${data.time}`, 'success');
-                    
-                    // Employee status info yangilash
-                    updateEmployeeStatusInfo(employeeId);
-                    
+                    var msg = type === 'in' ? '👋 Xush kelibsiz, ' + data.employee_name + '!' : '👋 Xayr, ' + data.employee_name + '! Rahmat!';
+                    showWelcome(msg, type === 'in' ? 'checkin' : 'checkout');
+                    updateStatus(data.employee_name + ' ' + data.type_display + ' qayd etildi', 'success');
+                    addLog(data.employee_name + ' ' + (data.type_display || '').toLowerCase() + 'i: ' + data.time, 'success');
+                    updateEmployeeStatusInfo(id);
                 } else {
                     document.getElementById('errorSound').play();
                     updateStatus(data.message, 'error');
                     addLog(data.message, 'error');
                 }
             })
-            .catch(error => {
-                console.error('Fetch error:', error);
-                updateStatus(`Server xatosi: ${error.message}`, 'error');
-                addLog(`Server xatosi: ${error.message}`, 'error');
+            .catch(function(error) { updateStatus('Server xatosi: ' + error.message, 'error'); });
+        }
+
+        function updateAttendanceTable(data) {
+            var badge = data.type === 'in' ? '<span class="badge-checkin attendance-badge"><i class="fas fa-clock"></i> ' + data.time + '</span>' : '<span class="badge-checkout attendance-badge"><i class="fas fa-clock"></i> ' + data.time + '</span>';
+            var card = '<div class="employee-card-item"><div><strong>' + data.employee_name + '</strong><div class="text-muted small">' + data.type_display + '</div></div>' + badge + '</div>';
+            if (data.type === 'in') {
+                var list = document.getElementById('checkinList'), cnt = document.getElementById('checkinCount');
+                if (list.children.length === 1 && list.children[0].classList.contains('text-center')) list.innerHTML = '';
+                list.insertAdjacentHTML('afterbegin', card);
+                cnt.textContent = parseInt(cnt.textContent) + 1;
+            } else {
+                var list = document.getElementById('checkoutList'), cnt = document.getElementById('checkoutCount');
+                if (list.children.length === 1 && list.children[0].classList.contains('text-center')) list.innerHTML = '';
+                list.insertAdjacentHTML('afterbegin', card);
+                cnt.textContent = parseInt(cnt.textContent) + 1;
+            }
+        }
+
+        function updateEmployeeStatusInfo(id) {
+            fetch('/get_employee_status/' + id + '/')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var div = document.getElementById('employeeStatusInfo');
+                var html = '';
+                if (data.status === 'not_checked_in') html = '<div class="p-2" style="background:var(--warning-light);border-radius:var(--radius-sm);font-size:13px;"><i class="fas fa-info-circle me-1"></i>' + data.employee_name + ' hali kelmagan</div>';
+                else if (data.status === 'checked_in') html = '<div class="p-2" style="background:var(--success-light);border-radius:var(--radius-sm);font-size:13px;"><i class="fas fa-check-circle me-1"></i>' + data.employee_name + ' ' + data.checkin_time + ' da kelgan</div>';
+                else if (data.status === 'checked_out') html = '<div class="p-2" style="background:var(--info-light);border-radius:var(--radius-sm);font-size:13px;"><i class="fas fa-door-closed me-1"></i>' + data.employee_name + ' ' + data.checkin_time + ' da kelgan, ' + data.checkout_time + ' da chiqgan</div>';
+                div.innerHTML = html;
             });
         }
-        
-        // Jadvalni yangilash
-        function updateAttendanceTable(data) {
-            const timeBadge = data.type === 'in' 
-                ? `<span class="badge-checkin attendance-badge"><i class="fas fa-clock"></i> ${data.time}</span>`
-                : `<span class="badge-checkout attendance-badge"><i class="fas fa-clock"></i> ${data.time}</span>`;
-            
-            const employeeCard = `
-                <div class="employee-card p-3 border rounded mb-2">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>${data.employee_name}</strong>
-                            <div class="text-muted small">${data.type_display}</div>
-                        </div>
-                        <div class="text-end">
-                            ${timeBadge}
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            if (data.type === 'in') {
-                // Kelishlar ro'yxatiga qo'shish
-                const checkinList = document.getElementById('checkinList');
-                const checkinCount = document.getElementById('checkinCount');
-                
-                // Agar bo'sh bo'lsa
-                if (checkinList.children.length === 1 && checkinList.children[0].classList.contains('text-center')) {
-                    checkinList.innerHTML = '';
-                }
-                
-                checkinList.insertAdjacentHTML('afterbegin', employeeCard);
-                checkinCount.textContent = parseInt(checkinCount.textContent) + 1;
-                
-            } else {
-                // Chiqishlar ro'yxatiga qo'shish
-                const checkoutList = document.getElementById('checkoutList');
-                const checkoutCount = document.getElementById('checkoutCount');
-                
-                // Agar bo'sh bo'lsa
-                if (checkoutList.children.length === 1 && checkoutList.children[0].classList.contains('text-center')) {
-                    checkoutList.innerHTML = '';
-                }
-                
-                checkoutList.insertAdjacentHTML('afterbegin', employeeCard);
-                checkoutCount.textContent = parseInt(checkoutCount.textContent) + 1;
-            }
-        }
-        
-        // Xodim holati ma'lumotini yangilash
-        function updateEmployeeStatusInfo(employeeId) {
-            fetch(`/get_employee_status/${employeeId}/`)
-                .then(response => response.json())
-                .then(data => {
-                    const infoDiv = document.getElementById('employeeStatusInfo');
-                    let html = '';
-                    
-                    if (data.status === 'not_checked_in') {
-                        html = `<div class="alert alert-warning p-2 mb-0">
-                            <i class="fas fa-info-circle me-1"></i>
-                            ${data.employee_name} hali kelmagan
-                        </div>`;
-                    } else if (data.status === 'checked_in') {
-                        html = `<div class="alert alert-success p-2 mb-0">
-                            <i class="fas fa-check-circle me-1"></i>
-                            ${data.employee_name} ${data.checkin_time} da kelgan
-                        </div>`;
-                    } else if (data.status === 'checked_out') {
-                        html = `<div class="alert alert-info p-2 mb-0">
-                            <i class="fas fa-door-closed me-1"></i>
-                            ${data.employee_name} ${data.checkin_time} da kelgan, ${data.checkout_time} da chiqgan
-                        </div>`;
-                    }
-                    
-                    infoDiv.innerHTML = html;
-                });
-        }
-        
-        // Kamera to'xtatish
+
         function stopCamera() {
-            if (detectionInterval) {
-                clearInterval(detectionInterval);
-                detectionInterval = null;
-            }
-            
+            if (detectionInterval) { clearInterval(detectionInterval); detectionInterval = null; }
             recognitionActive = false;
-            
-            if (videoStream) {
-                videoStream.getTracks().forEach(track => track.stop());
-                videoStream = null;
-            }
-            
-            video.srcObject = null;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
-            
+            if (videoStream) { videoStream.getTracks().forEach(function(t) { t.stop(); }); videoStream = null; }
+            video.srcObject = null; ctx.clearRect(0, 0, canvas.width, canvas.height);
+            startBtn.disabled = false; stopBtn.disabled = true;
             updateStatus('Kamera to\'xtatildi', 'info');
             document.getElementById('cameraStatus').innerHTML = '❌ O\'chirilgan';
-            addLog('Kamera to\'xtatildi');
         }
-        
-        // Welcome banner ko'rsatish
-        function showWelcome(message, type = 'checkin') {
-            const banner = document.getElementById('welcomeBanner');
-            const messageEl = document.getElementById('welcomeMessage');
-            
-            messageEl.textContent = message;
-            banner.className = `welcome-banner welcome-${type}`;
+
+        function showWelcome(msg, type) {
+            var banner = document.getElementById('welcomeBanner');
+            document.getElementById('welcomeMessage').textContent = msg;
+            banner.className = 'welcome-banner welcome-' + (type || 'checkin');
             banner.classList.add('show');
-            
-            setTimeout(() => {
-                banner.classList.remove('show');
-            }, 3000);
+            setTimeout(function() { banner.classList.remove('show'); }, 3000);
         }
-        
-        // CSRF token olish
+
         function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== '') {
-                const cookies = document.cookie.split(';');
-                for (let i = 0; i < cookies.length; i++) {
-                    const cookie = cookies[i].trim();
-                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
+            var v = null;
+            if (document.cookie) { var cs = document.cookie.split(';'); for (var i = 0; i < cs.length; i++) { var c = cs[i].trim(); if (c.substring(0, name.length + 1) === (name + '=')) { v = decodeURIComponent(c.substring(name.length + 1)); break; } } }
+            return v;
         }
-        
-        // ============ EVENT LISTENER'LAR ============
-        
-        // Kamerani yoqish
-        startBtn.addEventListener('click', async () => {
-            try {
-                await startCamera();
-            } catch (error) {
-                console.error('Start camera error:', error);
-                updateStatus(`❌ Xato: ${error.message}`, 'error');
-            }
-        });
-        
-        // Kamerani to'xtatish
+
+        // ============ EVENTS ============
+        startBtn.addEventListener('click', function() { startCamera(); });
         stopBtn.addEventListener('click', stopCamera);
-        
-        // Qo'lda kelish
-        document.getElementById('manualCheckin').addEventListener('click', () => {
-            const employeeId = manualSelect.value;
-            const employeeName = manualSelect.options[manualSelect.selectedIndex].text;
-            
-            if (!employeeId) {
-                alert('Xodimni tanlang!');
-                return;
-            }
-            
-            markAttendance(employeeId, 'in', employeeName);
+
+        document.getElementById('manualCheckin').addEventListener('click', function() {
+            var id = manualSelect.value, name = manualSelect.options[manualSelect.selectedIndex] ? manualSelect.options[manualSelect.selectedIndex].text : '';
+            if (!id) { alert('Xodimni tanlang!'); return; }
+            markAttendance(id, 'in', name);
         });
-        
-        // Qo'lda chiqish
-        document.getElementById('manualCheckout').addEventListener('click', () => {
-            const employeeId = manualSelect.value;
-            const employeeName = manualSelect.options[manualSelect.selectedIndex].text;
-            
-            if (!employeeId) {
-                alert('Xodimni tanlang!');
-                return;
-            }
-            
-            markAttendance(employeeId, 'out', employeeName);
+
+        document.getElementById('manualCheckout').addEventListener('click', function() {
+            var id = manualSelect.value, name = manualSelect.options[manualSelect.selectedIndex] ? manualSelect.options[manualSelect.selectedIndex].text : '';
+            if (!id) { alert('Xodimni tanlang!'); return; }
+            markAttendance(id, 'out', name);
         });
-        
-        // Xodim tanlanganda holatni ko'rsatish
+
         manualSelect.addEventListener('change', function() {
-            const employeeId = this.value;
-            if (employeeId) {
-                updateEmployeeStatusInfo(employeeId);
-            } else {
-                document.getElementById('employeeStatusInfo').innerHTML = '';
-            }
+            if (this.value) updateEmployeeStatusInfo(this.value);
+            else document.getElementById('employeeStatusInfo').innerHTML = '';
         });
-        
-        // Sahifa yuklanganda
-        document.addEventListener('DOMContentLoaded', () => {
-            // Sozlamalarni ko'rsatish
+
+        document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('thresholdValue').textContent = CONFIG.THRESHOLD;
-            document.getElementById('intervalValue').textContent = `${CONFIG.DETECTION_INTERVAL}ms`;
-            document.getElementById('matchesValue').textContent = `${CONFIG.REQUIRED_MATCHES} marta`;
-            
-            addLog('Tizim tayyor. "Kamerani Yoqish" tugmasini bosing.');
+            document.getElementById('intervalValue').textContent = CONFIG.DETECTION_INTERVAL + 'ms';
+            document.getElementById('matchesValue').textContent = CONFIG.REQUIRED_MATCHES + ' marta';
+            addLog('Tizim tayyor. "Kamerani Yoqish" tugmasini bosing.', 'info');
             updateStatus('Tizim tayyor. Kamerani yoqing va yuzingizni ko\'rsating.', 'success');
         });
-        
-        // Sahifa yopilganda kamerani to'xtatish
-        window.addEventListener('beforeunload', function() {
-            stopCamera();
-        });
-        
+
+        window.addEventListener('beforeunload', function() { stopCamera(); });
     </script>
-       <!-- Service Worker -->
-       <script>
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register("{% static 'js/service-worker.js' %}");
-        }
-      </script>
-  
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-
-
-
-
-
-
-
-
-
-
+    <script>
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register("{% static 'js/service-worker.js' %}");
+    </script>
 </body>
 </html>

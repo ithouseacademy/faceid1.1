@@ -19,6 +19,7 @@ Django==4.2
 django-axes==5.40.0
 django-cloudinary-storage==0.3.0
 django-cors-headers==3.14.0
+django-extensions==4.1
 django-formtools==2.6.1
 django-ipware==7.0.1
 django-otp==1.1.3

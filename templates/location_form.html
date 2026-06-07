@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if location %}Lokatsiyani tahrirlash{% else %}Yangi lokatsiya{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+  <div class="page-header fade-in">
+    <div>
+      <h1 class="h4 fw-bold mb-1"><i class="fas fa-map-marker-alt text-primary me-2"></i>{% if location %}Lokatsiyani tahrirlash{% else %}Yangi lokatsiya{% endif %}</h1>
+      <p class="small text-muted mb-0">Lokatsiya ma'lumotlarini kiriting</p>
+    </div>
+    <a href="{% url 'location_list' %}" class="btn btn-light"><i class="fas fa-arrow-left me-1"></i>Orqaga</a>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card fade-in delay-1">
+        <div class="card-body">
+          <form method="POST">
+            {% csrf_token %}
+
+            {% if form.errors %}
+            <div class="alert alert-danger">
+              <i class="fas fa-exclamation-triangle me-2"></i>Quyidagi xatoliklar mavjud:
+              <ul class="mb-0 mt-2">
+                {% for field in form %}
+                  {% for error in field.errors %}
+                  <li>{{ field.label }}: {{ error }}</li>
+                  {% endfor %}
+                {% endfor %}
+              </ul>
+            </div>
+            {% endif %}
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Lokatsiya nomi <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-control" value="{% if form.name.value %}{{ form.name.value }}{% elif location %}{{ location.name }}{% endif %}" required placeholder="Asosiy kirish">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Bino nomi <span class="text-danger">*</span></label>
+                <input type="text" name="building" class="form-control" value="{% if form.building.value %}{{ form.building.value }}{% elif location %}{{ location.building }}{% endif %}" required placeholder="Bosh ofis">
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Manzil <span class="text-danger">*</span></label>
+                <textarea name="address" class="form-control" rows="2" required placeholder="To'liq manzil">{% if form.address.value %}{{ form.address.value }}{% elif location %}{{ location.address }}{% endif %}</textarea>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Kenglik (Latitude)</label>
+                <div class="input-group">
+                  <input type="text" name="latitude" id="id_latitude" class="form-control" value="{% if form.latitude.value %}{{ form.latitude.value }}{% elif location %}{{ location.latitude }}{% endif %}" placeholder="40.895491">
+                  <button type="button" class="btn btn-outline-primary" onclick="getLocation(this)" title="Avto lokatsiya">
+                    <i class="fas fa-crosshairs"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Uzunlik (Longitude)</label>
+                <div class="input-group">
+                  <input type="text" name="longitude" id="id_longitude" class="form-control" value="{% if form.longitude.value %}{{ form.longitude.value }}{% elif location %}{{ location.longitude }}{% endif %}" placeholder="72.253090">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label fw-semibold">Face ID masofasi (metr)</label>
+                <input type="number" name="radius_meters" class="form-control" value="{% if form.radius_meters.value %}{{ form.radius_meters.value }}{% elif location %}{{ location.radius_meters }}{% else %}100{% endif %}" min="1">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Filial/Bino nomi</label>
+                <input type="text" name="branch_name" class="form-control" value="{% if form.branch_name.value %}{{ form.branch_name.value }}{% elif location %}{{ location.branch_name }}{% endif %}" placeholder="Filial nomi">
+              </div>
+              <div class="col-md-6 d-flex align-items-end">
+                <div class="form-check form-switch mb-2">
+                  <input type="checkbox" name="is_active" class="form-check-input" id="id_is_active" {% if form.is_active.value or location.is_active %}checked{% endif %}>
+                  <label class="form-check-label" for="id_is_active">Faol</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+              <a href="{% url 'location_list' %}" class="btn btn-light"><i class="fas fa-times me-1"></i>Bekor qilish</a>
+              <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Saqlash</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function getLocation(btn) {
+  if (!btn) btn = event && event.target ? event.target.closest('button') : document.querySelector('#id_latitude').closest('.input-group').querySelector('button');
+  if (!btn) return;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+  if (!navigator.geolocation) {
+    alert('Brauzeringiz geolokatsiyani qo\'llab-quvvatlamaydi!');
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fas fa-crosshairs"></i>';
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      document.getElementById('id_latitude').value = pos.coords.latitude.toFixed(6);
+      document.getElementById('id_longitude').value = pos.coords.longitude.toFixed(6);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-crosshairs"></i>';
+      showToast('Lokatsiya olindi: ' + pos.coords.latitude.toFixed(4) + ', ' + pos.coords.longitude.toFixed(4));
+    },
+    function(err) {
+      alert('Lokatsiya olishda xatolik: ' + err.message);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fas fa-crosshairs"></i>';
+    },
+    { enableHighAccuracy: true, timeout: 10000 }
+  );
+}
+function showToast(msg) {
+  var t = document.createElement('div');
+  t.className = 'position-fixed bottom-0 end-0 p-3';
+  t.style.zIndex = 9999;
+  t.innerHTML = '<div class="toast show align-items-center text-bg-success border-0"><div class="d-flex"><div class="toast-body">' + msg + '</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>';
+  document.body.appendChild(t);
+  setTimeout(function() { t.remove(); }, 4000);
+}
+</script>
+{% endblock %}

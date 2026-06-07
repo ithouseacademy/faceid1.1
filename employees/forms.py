@@ -206,7 +206,7 @@ class EmployeeForm(forms.ModelForm):
             'first_name', 'last_name', 'position', 'department',
             'phone', 'email', 'photo', 'monthly_salary', 
             'late_penalty_per_minute', 'allowed_late_minutes',
-            'daily_work_hours', 'is_active'
+            'daily_work_hours', 'is_active', 'notes'
         ]
         widgets = {
             'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ism'}),

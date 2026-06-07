@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Lokatsiyalar{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+      <h1 class="h4 mb-1 fw-bold"><i class="fas fa-map-marker-alt me-2"></i>Lokatsiyalar</h1>
+      <p class="small text-muted mb-0">{{ locations|length }} ta lokatsiya</p>
+    </div>
+    <a href="{% url 'location_add' %}" class="btn btn-primary">
+      <i class="fas fa-plus me-1"></i>Yangi lokatsiya
+    </a>
+  </div>
+
+  {% if locations %}
+  <div class="card fade-in mb-4">
+    <div class="card-header">
+      <span><i class="fas fa-map me-2"></i>Xarita</span>
+    </div>
+    <div class="card-body p-0">
+      <div id="locationMap" style="height:400px;width:100%;"></div>
+    </div>
+  </div>
+
+  <div class="card fade-in">
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Nomi</th>
+              <th>Bino</th>
+              <th>Manzil</th>
+              <th>GPS</th>
+              <th>Radius</th>
+              <th>Filial</th>
+              <th>Holat</th>
+              <th>Amallar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for loc in locations %}
+            <tr>
+              <td class="fw-medium">{{ loc.name }}</td>
+              <td>{{ loc.building }}</td>
+              <td><small class="text-muted">{{ loc.address|truncatechars:30 }}</small></td>
+              <td><small class="text-muted">{{ loc.latitude|floatformat:4 }}, {{ loc.longitude|floatformat:4 }}</small></td>
+              <td>{{ loc.radius_meters }} m</td>
+              <td>{{ loc.branch_name|default:"-" }}</td>
+              <td>
+                {% if loc.is_active %}
+                <span class="badge badge-ontime"><i class="fas fa-check-circle me-1"></i>Faol</span>
+                {% else %}
+                <span class="badge badge-absent"><i class="fas fa-times-circle me-1"></i>Nofaol</span>
+                {% endif %}
+              </td>
+              <td>
+                <a href="{% url 'location_edit' loc.id %}" class="btn btn-outline-warning btn-sm" title="Tahrirlash"><i class="fas fa-edit"></i></a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div class="card fade-in">
+    <div class="card-body">
+      <div class="empty-state">
+        <i class="fas fa-map-marker-alt"></i>
+        <h5 class="mt-3">Lokatsiyalar mavjud emas</h5>
+        <p class="text-muted">Hali hech qanday lokatsiya qo'shilmagan.</p>
+        <a href="{% url 'location_add' %}" class="btn btn-primary mt-2"><i class="fas fa-plus me-1"></i>Yangi lokatsiya</a>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var locations = {{ locations_json|safe }};
+  var hasValid = locations.some(function(l) { return l.lat && l.lng; });
+  if (!hasValid) { document.getElementById('locationMap').style.display = 'none'; return; }
+
+  var map = L.map('locationMap').setView([41.2995, 69.2401], 12);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
+
+  var bounds = [];
+  locations.forEach(function(loc) {
+    if (!loc.lat || !loc.lng) return;
+    var lat = parseFloat(loc.lat), lng = parseFloat(loc.lng);
+    var color = loc.is_active ? '#10b981' : '#ef4444';
+    var marker = L.circleMarker([lat, lng], {
+      radius: 10, fillColor: color, color: '#fff', weight: 2, fillOpacity: 0.8
+    }).addTo(map);
+    marker.bindPopup(
+      '<strong>' + loc.name + '</strong><br>' +
+      loc.building + '<br>' +
+      loc.address + '<br>' +
+      '<em>' + lat.toFixed(4) + ', ' + lng.toFixed(4) + '</em><br>' +
+      '<strong>Radius:</strong> ' + loc.radius + ' m'
+    );
+    bounds.push([lat, lng]);
+
+    if (loc.radius > 0) {
+      L.circle([lat, lng], {
+        radius: loc.radius, color: color, fillColor: color, fillOpacity: 0.1, weight: 1
+      }).addTo(map);
+    }
+  });
+
+  if (bounds.length > 0) { map.fitBounds(bounds, { padding: [50,50] }); }
+});
+</script>
+{% endblock %}

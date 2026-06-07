@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if record_type == 'late' %}Kechikishlar{% else %}Kelmaganlar{% endif %} monitoringi{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+  <div class="page-header fade-in">
+    <div>
+      <h1 class="h4 fw-bold mb-1"><i class="fas fa-clock text-warning me-2"></i>{% if record_type == 'late' %}Kechikishlar{% else %}Kelmaganlar{% endif %} monitoringi</h1>
+      <p class="small text-muted mb-0">{{ month_name }} {{ year }} — Xodimlarning intizom ko'rsatkichlari</p>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mb-4 fade-in delay-1">
+    <a href="{% url 'late_monitoring' %}?type=late{% if selected_employee %}&employee_id={{ selected_employee }}{% endif %}&month={{ month }}&year={{ year }}" class="btn {% if record_type == 'late' %}btn-warning{% else %}btn-light{% endif %}">
+      <i class="fas fa-clock me-1"></i>Kechikishlar
+    </a>
+    <a href="{% url 'late_monitoring' %}?type=absent{% if selected_employee %}&employee_id={{ selected_employee }}{% endif %}&month={{ month }}&year={{ year }}" class="btn {% if record_type == 'absent' %}btn-danger{% else %}btn-light{% endif %}">
+      <i class="fas fa-user-times me-1"></i>Kelmaganlar
+    </a>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-sm-3 fade-in delay-1">
+      <div class="stat-card" style="border-top: 3px solid var(--warning);">
+        <div class="stat-icon" style="background: var(--warning-light); color: #92400e;"><i class="fas fa-clock"></i></div>
+        <div class="stat-number">{{ total_records }}</div>
+        <div class="stat-label">{% if record_type == 'late' %}Kechikishlar soni{% else %}Kelmaganlar soni{% endif %}</div>
+      </div>
+    </div>
+    <div class="col-sm-3 fade-in delay-2">
+      <div class="stat-card" style="border-top: 3px solid var(--primary);">
+        <div class="stat-icon" style="background: var(--primary-light); color: var(--primary);"><i class="fas fa-users"></i></div>
+        <div class="stat-number">{{ total_employees }}</div>
+        <div class="stat-label">Jami xodimlar</div>
+      </div>
+    </div>
+    <div class="col-sm-3 fade-in delay-3">
+      <div class="stat-card" style="border-top: 3px solid var(--danger);">
+        <div class="stat-icon" style="background: var(--danger-light); color: var(--danger);"><i class="fas fa-hourglass-half"></i></div>
+        <div class="stat-number">{{ total_minutes }}</div>
+        <div class="stat-label">Kechikish daqiqalari</div>
+      </div>
+    </div>
+    <div class="col-sm-3 fade-in delay-3">
+      <div class="stat-card" style="border-top: 3px solid var(--info);">
+        <div class="stat-icon" style="background: #e0f2fe; color: #0369a1;"><i class="fas fa-users"></i></div>
+        <div class="stat-number">{{ employee_summary|length }}</div>
+        <div class="stat-label">Muammoli xodimlar</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4 fade-in delay-2">
+    <div class="card-header"><i class="fas fa-filter me-2"></i>Filterlar</div>
+    <div class="card-body">
+      <form method="GET" class="row g-3">
+        <input type="hidden" name="type" value="{{ record_type }}">
+        <div class="col-md-3">
+          <label class="form-label">Xodim</label>
+          <select name="employee_id" class="form-select">
+            <option value="">Barcha xodimlar</option>
+            {% for emp in employees %}
+            <option value="{{ emp.id }}"{% if selected_employee|stringformat:"s" == emp.id|stringformat:"s" %} selected{% endif %}>{{ emp.full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Oy</label>
+          <select name="month" class="form-select">
+            <option value="1" {% if month == 1 %}selected{% endif %}>Yanvar</option>
+            <option value="2" {% if month == 2 %}selected{% endif %}>Fevral</option>
+            <option value="3" {% if month == 3 %}selected{% endif %}>Mart</option>
+            <option value="4" {% if month == 4 %}selected{% endif %}>Aprel</option>
+            <option value="5" {% if month == 5 %}selected{% endif %}>May</option>
+            <option value="6" {% if month == 6 %}selected{% endif %}>Iyun</option>
+            <option value="7" {% if month == 7 %}selected{% endif %}>Iyul</option>
+            <option value="8" {% if month == 8 %}selected{% endif %}>Avgust</option>
+            <option value="9" {% if month == 9 %}selected{% endif %}>Sentabr</option>
+            <option value="10" {% if month == 10 %}selected{% endif %}>Oktabr</option>
+            <option value="11" {% if month == 11 %}selected{% endif %}>Noyabr</option>
+            <option value="12" {% if month == 12 %}selected{% endif %}>Dekabr</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Yil</label>
+          <select name="year" class="form-select">
+            {% now "Y" as current_year %}
+            {% with cy=current_year|add:0 %}
+            <option value="{{ cy }}"{% if year == cy %} selected{% endif %}>{{ cy }}</option>
+            <option value="{{ cy|add:-1 }}"{% if year == cy|add:-1 %} selected{% endif %}>{{ cy|add:-1 }}</option>
+            <option value="{{ cy|add:-2 }}"{% if year == cy|add:-2 %} selected{% endif %}>{{ cy|add:-2 }}</option>
+            <option value="{{ cy|add:-3 }}"{% if year == cy|add:-3 %} selected{% endif %}>{{ cy|add:-3 }}</option>
+            <option value="{{ cy|add:-4 }}"{% if year == cy|add:-4 %} selected{% endif %}>{{ cy|add:-4 }}</option>
+            {% endwith %}
+          </select>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search me-1"></i>Ko'rish</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if employee_summary %}
+  <div class="card mb-4 fade-in delay-2">
+    <div class="card-header">
+      <span><i class="fas fa-chart-bar me-2"></i>Xodimlar bo'yicha {% if record_type == 'late' %}kechikish{% else %}kelmaganlik{% endif %} statistikasi</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Xodim</th>
+              <th class="text-center">{% if record_type == 'late' %}Kechikishlar soni{% else %}Kelmaganlar soni{% endif %}</th>
+              {% if record_type == 'late' %}<th class="text-center">Jami kechikish (daq.)</th>{% endif %}
+              <th class="text-center">Amallar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in employee_summary %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  {% if item.employee.get_image_url %}
+                  <img src="{{ item.employee.get_image_url }}" class="employee-avatar-sm" alt="{{ item.employee.full_name }}">
+                  {% else %}
+                  <div class="employee-avatar-sm bg-light d-flex align-items-center justify-content-center"><i class="fas fa-user text-muted fa-sm"></i></div>
+                  {% endif %}
+                  <a href="{% url 'late_monitoring_detail' item.employee.id %}?type={{ record_type }}&month={{ month }}&year={{ year }}" class="fw-medium text-decoration-none">{{ item.employee.full_name }}</a>
+                </div>
+              </td>
+              <td class="text-center"><span class="badge {% if record_type == 'late' %}badge-late{% else %}badge-absent{% endif %}">{{ item.total_count }}</span></td>
+              {% if record_type == 'late' %}<td class="text-center">{{ item.total_late_minutes }} daq</td>{% endif %}
+              <td class="text-center">
+                <a href="{% url 'late_monitoring_detail' item.employee.id %}?type={{ record_type }}&month={{ month }}&year={{ year }}" class="btn btn-outline-primary btn-sm">
+                  <i class="fas fa-eye me-1"></i>Batafsil
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if records %}
+  <div class="card fade-in delay-3">
+    <div class="card-header">
+      <span><i class="fas fa-list me-2"></i>{% if record_type == 'late' %}Kechikishlar{% else %}Kelmaganlar{% endif %} ro'yxati</span>
+      <span class="badge bg-primary">{{ records|length }} ta</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Xodim</th>
+              <th>Sana</th>
+              {% if record_type == 'late' %}<th>Kechikish (daq.)</th>{% endif %}
+              <th>Sabab</th>
+              <th>Admin izohi</th>
+              <th>Amallar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rec in records %}
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  {% if rec.employee.get_image_url %}
+                  <img src="{{ rec.employee.get_image_url }}" class="employee-avatar-sm" alt="{{ rec.employee.full_name }}">
+                  {% else %}
+                  <div class="employee-avatar-sm bg-light d-flex align-items-center justify-content-center"><i class="fas fa-user text-muted fa-sm"></i></div>
+                  {% endif %}
+                  <span class="fw-medium">{{ rec.employee.full_name }}</span>
+                </div>
+              </td>
+              <td>{{ rec.date|date:"d.m.Y" }}</td>
+              {% if record_type == 'late' %}<td><span class="badge badge-late">{{ rec.late_minutes }} daq</span></td>{% endif %}
+              <td>
+                <small class="text-muted">{{ rec.reason|default:"-"|truncatechars:30 }}</small>
+                {% if rec.reason and rec.reason|length > 30 %}
+                <a href="#" data-bs-toggle="tooltip" title="{{ rec.reason }}"><i class="fas fa-info-circle text-muted ms-1"></i></a>
+                {% endif %}
+              </td>
+              <td>
+                <form method="POST" action="{% url 'late_record_edit' rec.id %}" style="display:flex;gap:4px;align-items:center;">
+                  {% csrf_token %}
+                  <input type="hidden" name="from_list" value="1">
+                  <input type="text" name="admin_note" class="form-control form-control-sm" style="min-width:120px;width:auto;" value="{{ rec.admin_note|default:'' }}" placeholder="Izoh...">
+                  <input type="hidden" name="reason" value="{{ rec.reason }}">
+                  <button type="submit" class="btn btn-outline-primary btn-sm" title="Saqlash"><i class="fas fa-check"></i></button>
+                </form>
+              </td>
+              <td>
+                <a href="{% url 'late_record_edit' rec.id %}" class="btn btn-outline-warning btn-sm" title="To'liq tahrirlash"><i class="fas fa-edit"></i></a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% if records.paginator and records.paginator.num_pages > 1 %}
+  <div class="mt-4 fade-in delay-4">
+    <nav aria-label="Page navigation">
+      <ul class="pagination justify-content-center">
+        {% if records.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page=1&type={{ record_type }}{% if selected_employee %}&employee_id={{ selected_employee }}{% endif %}&month={{ month }}&year={{ year }}"><i class="fas fa-angle-double-left"></i></a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ records.previous_page_number }}&type={{ record_type }}{% if selected_employee %}&employee_id={{ selected_employee }}{% endif %}&month={{ month }}&year={{ year }}"><i class="fas fa-angle-left"></i></a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ records.number }} / {{ records.paginator.num_pages }}</span></li>
+        {% if records.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ records.next_page_number }}&type={{ record_type }}{% if selected_employee %}&employee_id={{ selected_employee }}{% endif %}&month={{ month }}&year={{ year }}"><i class="fas fa-angle-right"></i></a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ records.paginator.num_pages }}&type={{ record_type }}{% if selected_employee %}&employee_id={{ selected_employee }}{% endif %}&month={{ month }}&year={{ year }}"><i class="fas fa-angle-double-right"></i></a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="card fade-in delay-3">
+    <div class="card-body">
+      <div class="empty-state">
+        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+        <h5 class="mt-3">{% if record_type == 'late' %}Kechikishlar{% else %}Kelmaganlar{% endif %} mavjud emas</h5>
+        <p class="text-muted">{{ month_name }} {{ year }} oyida barcha xodimlar o'z vaqtida kelgan.</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

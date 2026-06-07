@@ -138,6 +138,8 @@ class Employee(models.Model):
     )
 
     is_active = models.BooleanField(default=True, verbose_name='Faol')
+    cache_version = models.IntegerField(default=0, verbose_name='Kesh versiyasi')
+    notes = models.TextField(blank=True, verbose_name='Izoh')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Yaratilgan sana')
 
     class Meta:
@@ -156,6 +158,12 @@ class Employee(models.Model):
     def work_days_display(self):
         day_mapping = dict(self.WORK_DAYS_CHOICES)
         return ", ".join([day_mapping.get(day, day) for day in self.work_days])
+
+    @property
+    def get_image_url(self):
+        if self.photo:
+            return self.photo.url
+        return None
 
     def get_daily_schedule(self, day_code):
         schedule = self.work_schedule.get(day_code, {})
@@ -458,6 +466,7 @@ class Attendance(models.Model):
     late_minutes = models.IntegerField(default=0)
     penalty_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     notes = models.TextField(blank=True)
+    face_photo = models.ImageField(upload_to='attendance_faces/%Y/%m/%d/', null=True, blank=True, verbose_name='Yuz rasmi')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -690,3 +699,97 @@ class MonthlySalary(models.Model):
             self.net_salary = self.basic_salary
             self.save()
             return self.net_salary
+
+
+class Location(models.Model):
+    name = models.CharField(max_length=200, verbose_name='Lokatsiya nomi')
+    building = models.CharField(max_length=200, verbose_name='Bino nomi')
+    address = models.TextField(verbose_name='Manzil')
+    latitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name='Kenglik (Latitude)')
+    longitude = models.DecimalField(max_digits=9, decimal_places=6, null=True, blank=True, verbose_name='Uzunlik (Longitude)')
+    radius_meters = models.PositiveIntegerField(default=100, verbose_name='Face ID masofasi (metr)')
+    branch_name = models.CharField(max_length=200, blank=True, verbose_name='Filial/Bino nomi')
+    is_active = models.BooleanField(default=True, verbose_name='Faol')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = 'Lokatsiya'
+        verbose_name_plural = 'Lokatsiyalar'
+
+    def __str__(self):
+        return f"{self.name} - {self.building}"
+
+
+class FaceCapture(models.Model):
+    ATTENDANCE_TYPES = [
+        ('in', 'Kelish'),
+        ('out', 'Chiqish'),
+    ]
+
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='face_captures', verbose_name='Xodim')
+    attendance = models.ForeignKey(Attendance, on_delete=models.SET_NULL, null=True, blank=True, related_name='face_captures', verbose_name='Davomat')
+    photo = models.ImageField(upload_to='face_captures/%Y/%m/%d/', verbose_name='Rasm')
+    attendance_type = models.CharField(max_length=3, choices=ATTENDANCE_TYPES, verbose_name='Tur')
+    location = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True, blank=True, related_name='face_captures', verbose_name='Lokatsiya')
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    captured_at = models.DateTimeField(auto_now_add=True, verbose_name='Olingan vaqt')
+
+    class Meta:
+        ordering = ['-captured_at']
+        verbose_name = 'Face ID rasm'
+        verbose_name_plural = 'Face ID rasmlar'
+
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.get_attendance_type_display()} - {self.captured_at}"
+
+    @property
+    def type_display(self):
+        return "Kelish" if self.attendance_type == 'in' else 'Chiqish'
+
+
+class LateAbsenceRecord(models.Model):
+    RECORD_TYPES = [
+        ('late', 'Kechikish'),
+        ('absent', 'Kelmagan'),
+    ]
+
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='late_absence_records', verbose_name='Xodim')
+    record_type = models.CharField(max_length=10, choices=RECORD_TYPES, verbose_name='Tur')
+    date = models.DateField(verbose_name='Sana')
+    late_minutes = models.PositiveIntegerField(default=0, verbose_name='Kechikish (daq.)')
+    reason = models.TextField(blank=True, verbose_name='Sabab')
+    admin_note = models.TextField(blank=True, verbose_name='Admin izohi')
+    attendance = models.ForeignKey(Attendance, on_delete=models.SET_NULL, null=True, blank=True, related_name='late_absence_records', verbose_name='Davomat')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-date']
+        unique_together = ['employee', 'date', 'record_type']
+        verbose_name = 'Kechikish/Kelmaganlik'
+        verbose_name_plural = 'Kechikish/Kelmaganliklar'
+
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.get_record_type_display()} - {self.date}"
+
+
+class CleanupConfig(models.Model):
+    """Avtomatik tozalash sozlamalari"""
+    auto_enabled = models.BooleanField(default=False, verbose_name='Avtomatik tozalash yoqilgan')
+    months_back = models.PositiveIntegerField(default=2, verbose_name='Necha oydan eski ma\'lumotlar')
+    interval_days = models.PositiveIntegerField(default=60, verbose_name='Oraliq (kun)')
+    clean_face_captures = models.BooleanField(default=True, verbose_name='Face ID rasmlar')
+    clean_attendance_photos = models.BooleanField(default=True, verbose_name='Davomat rasmlar')
+    clean_attendance_records = models.BooleanField(default=True, verbose_name='Davomat yozuvlari')
+    last_run = models.DateTimeField(null=True, blank=True, verbose_name='Oxirgi tozalash')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Avtomatik tozalash sozlamasi'
+        verbose_name_plural = 'Avtomatik tozalash sozlamalari'
+
+    def __str__(self):
+        return f"Avtomatik tozalash: {'Yoqilgan' if self.auto_enabled else 'O\'chirilgan'}"

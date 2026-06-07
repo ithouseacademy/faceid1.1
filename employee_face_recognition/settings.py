@@ -11,13 +11,14 @@ SECRET_KEY = os.environ.get(
     "django-insecure-dev-key-change-this"
 )
 
-DEBUG = os.environ.get("DEBUG", "False") == "True"
+DEBUG = True
 
 ALLOWED_HOSTS = [
     "faceid11-production.up.railway.app",
-    "127.0.0.1",
+    "127.0.0.1:8000",
     "localhost",
     ".railway.app",
+    '*',    
 ]
 
 # ================= CSRF / HTTPS =================
@@ -42,6 +43,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "employees",
 ]
+
+if DEBUG:
+    INSTALLED_APPS += ["django_extensions"]
 
 # ================= MIDDLEWARE =================
 
@@ -117,9 +121,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # ================= LANGUAGE =================
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "uz"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Tashkent"
 
 USE_I18N = True
 
@@ -154,6 +158,13 @@ STORAGES = {
 
 # ================= MEDIA =================
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+# ================= TELEGRAM BOT =================
+
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
 
 # ================= DEFAULT AUTO FIELD =================
 

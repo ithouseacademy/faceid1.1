@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Hisobot - PDF{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+  <div class="no-print d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="h4 fw-bold mb-1"><i class="fas fa-file-pdf text-danger me-2"></i>Hisobot</h1>
+      <p class="small text-muted mb-0">
+        {{ start_date|date:"d.m.Y" }} - {{ end_date|date:"d.m.Y" }} |
+        {% if report_type == 'daily' %}Kunlik{% elif report_type == 'weekly' %}Haftalik{% else %}Oylik{% endif %} hisobot
+      </p>
+    </div>
+    <button onclick="window.print()" class="btn btn-danger"><i class="fas fa-print me-1"></i>Chop etish</button>
+  </div>
+
+  <div class="card mb-4 fade-in">
+    <div class="card-body text-center">
+      <img src="{% static 'img/sklatlogo.png' %}" width="60" height="60" style="border-radius:12px;" class="mb-2">
+      <h3 class="fw-bold mb-1">IT House Face ID</h3>
+      <p class="text-muted mb-0">Davomat hisoboti</p>
+      <small class="text-muted">
+        {{ start_date|date:"d.m.Y" }} - {{ end_date|date:"d.m.Y" }} |
+        {% if report_type == 'daily' %}Kunlik{% elif report_type == 'weekly' %}Haftalik{% else %}Oylik{% endif %}
+      </small>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-md-3 col-6 fade-in delay-1">
+      <div class="stat-card text-center">
+        <div class="stat-number">{{ total_stats.total_employees|default:"0" }}</div>
+        <div class="stat-label">Jami xodimlar</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6 fade-in delay-1">
+      <div class="stat-card text-center" style="border-top: 3px solid var(--success);">
+        <div class="stat-number text-success">{{ total_stats.total_present|default:"0" }}</div>
+        <div class="stat-label">Kelgan</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6 fade-in delay-2">
+      <div class="stat-card text-center" style="border-top: 3px solid var(--warning);">
+        <div class="stat-number text-warning">{{ total_stats.total_late|default:"0" }}</div>
+        <div class="stat-label">Kechikkan</div>
+      </div>
+    </div>
+    <div class="col-md-3 col-6 fade-in delay-2">
+      <div class="stat-card text-center" style="border-top: 3px solid var(--danger);">
+        <div class="stat-number text-danger">{{ total_stats.total_absent|default:"0" }}</div>
+        <div class="stat-label">Kelmagan</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card fade-in delay-3">
+    <div class="card-header">
+      <span><i class="fas fa-list me-2"></i>Xodimlar bo'yicha hisobot</span>
+      <span class="badge bg-primary">{{ employees_data|length }} ta</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Xodim</th>
+              <th>Lavozim</th>
+              <th>Kelgan</th>
+              <th>Kechikkan</th>
+              <th>Kelmagan</th>
+              <th>Kechikish (daq.)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in employees_data %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  {% if item.photo_url %}
+                  <img src="{{ item.photo_url }}" class="employee-avatar-sm">
+                  {% endif %}
+                  <span class="fw-medium">{{ item.full_name }}</span>
+                </div>
+              </td>
+              <td><small class="text-muted">{{ item.position }}</small></td>
+              <td><span class="badge badge-ontime">{{ item.present_count|default:"0" }}</span></td>
+              <td><span class="badge badge-late">{{ item.late_count|default:"0" }}</span></td>
+              <td><span class="badge badge-absent">{{ item.absent_count|default:"0" }}</span></td>
+              <td>{{ item.total_late_minutes|default:"0" }} daq</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">
+                  <i class="fas fa-inbox"></i>
+                  <p class="mt-2 mb-0">Ma'lumotlar mavjud emas</p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card-footer text-muted small text-center">
+      Hisobot yaratilgan sana: {% now "d.m.Y H:i" %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  window.print();
+});
+</script>
+{% endblock %}

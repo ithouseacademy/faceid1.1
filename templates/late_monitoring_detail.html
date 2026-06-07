@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ employee.full_name }} - {% if record_type == 'late' %}Kechikishlar{% else %}Kelmaganliklar{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+  <div class="page-header fade-in">
+    <div class="d-flex align-items-center gap-3">
+      {% if employee.get_image_url %}
+      <img src="{{ employee.get_image_url }}" class="rounded-circle" width="50" height="50" style="object-fit:cover;">
+      {% else %}
+      <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width:50px;height:50px;">
+        <i class="fas fa-user text-primary fa-lg"></i>
+      </div>
+      {% endif %}
+      <div>
+        <h1 class="h4 fw-bold mb-1">{{ employee.full_name }}</h1>
+        <p class="small text-muted mb-0">{{ employee.position }} · {{ employee.department }}</p>
+      </div>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="{% url 'late_monitoring' %}" class="btn btn-light"><i class="fas fa-arrow-left me-1"></i>Orqaga</a>
+    </div>
+  </div>
+
+  <div class="card mb-4 fade-in delay-1">
+    <div class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+      <span><i class="fas fa-calendar me-2"></i>{% if record_type == 'late' %}Kechikishlar{% else %}Kelmaganliklar{% endif %} tarixi</span>
+      <form method="GET" class="d-flex gap-2 align-items-center">
+        <select name="month" class="form-select form-select-sm" style="width:auto;">
+          {% for m in months %}
+          <option value="{{ m.0 }}"{% if month|stringformat:"s" == m.0|stringformat:"s" %} selected{% endif %}>{{ m.1 }}</option>
+          {% endfor %}
+        </select>
+        <select name="year" class="form-select form-select-sm" style="width:auto;">
+          {% for y in years %}
+          <option value="{{ y }}"{% if year|stringformat:"s" == y|stringformat:"s" %} selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i></button>
+      </form>
+    </div>
+    <div class="card-body p-0">
+      {% if records %}
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Sana</th>
+              {% if record_type == 'late' %}<th>Kechikish (daq.)</th>{% endif %}
+              <th>Sabab</th>
+              <th>Admin izohi</th>
+              <th>Amallar</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for rec in records %}
+            <tr>
+              <td>{{ rec.date|date:"d.m.Y" }} ({{ rec.date|date:"l" }})</td>
+              {% if record_type == 'late' %}<td><span class="badge badge-late">{{ rec.late_minutes }} daq</span></td>{% endif %}
+              <td><small class="text-muted">{{ rec.reason|default:"-" }}</small></td>
+              <td><small class="text-muted">{{ rec.admin_note|default:"-" }}</small></td>
+              <td>
+                <a href="{% url 'late_record_edit' rec.id %}" class="btn btn-outline-warning btn-sm" title="Tahrirlash"><i class="fas fa-edit"></i></a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <i class="fas fa-check-circle" style="color: var(--success);"></i>
+        <h5 class="mt-3">{% if record_type == 'late' %}Kechikishlar{% else %}Kelmaganliklar{% endif %} mavjud emas</h5>
+        <p class="text-muted">{{ month }}/{{ year }} oyida hech qanday qayd topilmadi.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

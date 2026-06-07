@@ -1,68 +1,84 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load static %}
-
+{% block title %}Profil{% endblock %}
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
+<div class="container-fluid fade-in">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-xl-6">
             <div class="card">
                 <div class="card-header">
-                    <h4><i class="fas fa-user-circle"></i> Profil</h4>
+                    <h5 class="mb-0"><i class="fas fa-user-circle me-2 text-primary"></i>Profil</h5>
                 </div>
                 <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4 text-center">
+                    <div class="row g-4">
+                        <div class="col-md-4 text-center border-md-end">
                             <div class="mb-3">
-                                <i class="fas fa-user-circle fa-6x text-primary"></i>
+                                <i class="fas fa-user-circle fa-6x text-primary" style="font-size:5rem;"></i>
                             </div>
-                            <h4>{{ user.username }}</h4>
-                            <p class="text-muted">
+                            <h4 class="fw-bold">{{ user.username }}</h4>
+                            <p class="text-muted mb-2">
                                 {% if user.is_superuser %}
-                                    <span class="badge bg-danger">Super Admin</span>
+                                <span class="badge bg-danger">Super Admin</span>
                                 {% elif user.is_staff %}
-                                    <span class="badge bg-warning">Admin</span>
+                                <span class="badge bg-warning text-white">Admin</span>
+                                {% elif user.profile.user_type == 'admin' %}
+                                <span class="badge bg-warning text-white">Admin</span>
+                                {% elif user.profile.user_type == 'hr' %}
+                                <span class="badge bg-info">HR</span>
+                                {% elif user.profile.user_type == 'manager' %}
+                                <span class="badge bg-primary">Menejer</span>
                                 {% else %}
-                                    <span class="badge bg-info">Foydalanuvchi</span>
+                                <span class="badge bg-secondary">Xodim</span>
                                 {% endif %}
                             </p>
                         </div>
                         <div class="col-md-8">
-                            <div class="mb-3">
-                                <strong>Ism:</strong> {{ user.first_name|default:"Kiritilmagan" }}
+                            <div class="table-responsive">
+                                <table class="table table-borderless mb-0">
+                                    <tbody>
+                                        <tr>
+                                            <td class="fw-semibold text-muted" style="width:140px;">Ism:</td>
+                                            <td>{{ user.first_name|default:"Kiritilmagan" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-semibold text-muted">Familiya:</td>
+                                            <td>{{ user.last_name|default:"Kiritilmagan" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-semibold text-muted">Email:</td>
+                                            <td>{{ user.email|default:"Kiritilmagan" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-semibold text-muted">Foydalanuvchi turi:</td>
+                                            <td>{{ user.profile.user_type|default:"Xodim" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-semibold text-muted">Ro'yxatdan o'tgan:</td>
+                                            <td>{{ user.date_joined|date:"d.m.Y H:i" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-semibold text-muted">Oxirgi kirish:</td>
+                                            <td>{{ user.last_login|date:"d.m.Y H:i"|default:"Hali kirilmagan" }}</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-semibold text-muted">Holat:</td>
+                                            <td>
+                                                {% if user.is_active %}
+                                                <span class="badge badge-ontime">Faol</span>
+                                                {% else %}
+                                                <span class="badge badge-absent">Nofaol</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
-                            <div class="mb-3">
-                                <strong>Familiya:</strong> {{ user.last_name|default:"Kiritilmagan" }}
-                            </div>
-                            <div class="mb-3">
-                                <strong>Email:</strong> {{ user.email|default:"Kiritilmagan" }}
-                            </div>
-                            <div class="mb-3">
-                                <strong>Ro'yxatdan o'tgan:</strong> {{ user.date_joined|date:"d.m.Y H:i" }}
-                            </div>
-                            <div class="mb-3">
-                                <strong>Oxirgi kirish:</strong> {{ user.last_login|date:"d.m.Y H:i"|default:"Hali kirilmagan" }}
-                            </div>
-                            <div class="mb-3">
-                                <strong>Holat:</strong>
-                                {% if user.is_active %}
-                                    <span class="badge bg-success">Faol</span>
-                                {% else %}
-                                    <span class="badge bg-danger">Nofaol</span>
+                            <div class="mt-4 d-flex flex-wrap gap-2">
+                                <a href="{% url 'dashboard' %}" class="btn btn-primary"><i class="fas fa-home me-1"></i>Dashboard</a>
+                                {% if user.is_superuser or user.is_staff %}
+                                <a href="{% url 'admin_dashboard' %}" class="btn btn-warning"><i class="fas fa-cog me-1"></i>Admin panel</a>
                                 {% endif %}
-                            </div>
-                            
-                            <div class="mt-4">
-                                <a href="{% url 'dashboard' %}" class="btn btn-primary">
-                                    <i class="fas fa-home"></i> Dashboard
-                                </a>
-                                {% if user.is_superuser %}
-                                <a href="{% url 'admin_dashboard' %}" class="btn btn-warning">
-                                    <i class="fas fa-cog"></i> Admin Panel
-                                </a>
-                                {% endif %}
-                                <a href="{% url 'logout' %}" class="btn btn-danger float-end">
-                                    <i class="fas fa-sign-out-alt"></i> Chiqish
-                                </a>
+                                <a href="{% url 'logout' %}" class="btn btn-danger ms-auto"><i class="fas fa-sign-out-alt me-1"></i>Chiqish</a>
                             </div>
                         </div>
                     </div>

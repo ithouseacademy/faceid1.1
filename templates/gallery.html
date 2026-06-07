@@ -1,0 +1,268 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Face ID Rasmlar Galereyasi{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+  <div class="page-header fade-in">
+    <div>
+      <h1 class="h4 fw-bold mb-1"><i class="fas fa-images text-primary me-2"></i>Face ID Rasmlar Galereyasi</h1>
+      <p class="small text-muted mb-0">Jami {{ total_photos }} ta rasm, bugun {{ today_photos }} ta</p>
+    </div>
+  </div>
+
+  <div class="card mb-4 fade-in delay-1">
+    <div class="card-header"><i class="fas fa-filter me-2"></i>Filterlar</div>
+    <div class="card-body">
+      <form method="GET" class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Xodim</label>
+          <select name="employee_id" class="form-select">
+            <option value="">Barcha xodimlar</option>
+            {% for emp in employees %}
+            <option value="{{ emp.id }}"{% if selected_employee|stringformat:"s" == emp.id|stringformat:"s" %} selected{% endif %}>{{ emp.full_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Sana</label>
+          <input type="date" name="date" class="form-control" value="{{ selected_date|date:'Y-m-d' }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Tur</label>
+          <select name="type" class="form-select">
+            <option value="">Barcha turlar</option>
+            <option value="in"{% if selected_type == 'in' %} selected{% endif %}>Kelish</option>
+            <option value="out"{% if selected_type == 'out' %} selected{% endif %}>Chiqish</option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search me-1"></i>Qidirish</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% if photos %}
+  <div class="photo-gallery fade-in delay-2">
+    {% for photo in photos %}
+    <div class="gallery-item" style="cursor:pointer;" onclick="openModal('{{ photo.photo_url }}', '{{ photo.employee_name|escapejs }}', '{{ photo.captured_at|date:"Y-m-d H:i:s"|escapejs }}', '{{ photo.attendance_type }}', '{{ photo.location_name|escapejs }}', '{{ photo.location_address|escapejs }}', '{{ photo.location_building|escapejs }}', '{{ photo.latitude|escapejs }}', '{{ photo.longitude|escapejs }}', '{{ photo.source }}', {{ photo.id }})">
+      <img src="{{ photo.photo_url }}" alt="{{ photo.employee_name }}">
+      <div class="gallery-caption">
+        <strong>{{ photo.employee_name|truncatechars:20 }}</strong><br>
+        <small>{{ photo.captured_at|date:"d.m.Y H:i" }}</small>
+        <span class="badge {% if photo.attendance_type == 'in' %}badge-ontime{% else %}badge-early{% endif %} ms-1">
+          {% if photo.attendance_type == 'in' %}<i class="fas fa-sign-in-alt"></i> Kelish{% else %}<i class="fas fa-sign-out-alt"></i> Chiqish{% endif %}
+        </span>
+        {% if photo.location_name %}
+        <small class="d-block mt-1"><i class="fas fa-map-marker-alt"></i> {{ photo.location_name }}</small>
+        {% endif %}
+        {% if photo.source == 'attendance' %}
+        <span class="badge bg-info mt-1"><i class="fas fa-clipboard-check"></i> Davomat</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if photos.paginator and photos.paginator.num_pages > 1 %}
+  <div class="mt-4 fade-in delay-3">
+    <nav aria-label="Page navigation">
+      <ul class="pagination justify-content-center">
+        {% if photos.has_previous %}
+        <li class="page-item"><a class="page-link" href="?page=1{% if selected_employee %}&employee_id={{ selected_employee }}{% endif %}{% if selected_date %}&date={{ selected_date|date:'Y-m-d' }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}"><i class="fas fa-angle-double-left"></i></a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ photos.previous_page_number }}{% if selected_employee %}&employee_id={{ selected_employee }}{% endif %}{% if selected_date %}&date={{ selected_date|date:'Y-m-d' }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}"><i class="fas fa-angle-left"></i></a></li>
+        {% endif %}
+        <li class="page-item active"><span class="page-link">{{ photos.number }} / {{ photos.paginator.num_pages }}</span></li>
+        {% if photos.has_next %}
+        <li class="page-item"><a class="page-link" href="?page={{ photos.next_page_number }}{% if selected_employee %}&employee_id={{ selected_employee }}{% endif %}{% if selected_date %}&date={{ selected_date|date:'Y-m-d' }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}"><i class="fas fa-angle-right"></i></a></li>
+        <li class="page-item"><a class="page-link" href="?page={{ photos.paginator.num_pages }}{% if selected_employee %}&employee_id={{ selected_employee }}{% endif %}{% if selected_date %}&date={{ selected_date|date:'Y-m-d' }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}"><i class="fas fa-angle-double-right"></i></a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="card fade-in delay-2">
+    <div class="card-body">
+      <div class="empty-state">
+        <i class="fas fa-images"></i>
+        <h5 class="mt-3">Rasm topilmadi</h5>
+        <p class="text-muted">Tanlangan filterlar bo'yicha hech qanday rasm mavjud emas.</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Photo Modal -->
+<div class="modal fade" id="photoModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title" id="modalEmployeeName"><i class="fas fa-user me-2 text-primary"></i><span id="modalName"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img id="modalImage" src="" class="img-fluid rounded" style="max-height:65vh;object-fit:contain;">
+        <div class="row g-3 mt-3 text-start" id="modalDetails">
+          <div class="col-md-6">
+            <div class="d-flex align-items-center gap-2 p-2 rounded" style="background:var(--bg);">
+              <i class="fas fa-calendar text-primary"></i>
+              <div><small class="text-muted d-block">Sana</small><strong id="modalDate"></strong></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="d-flex align-items-center gap-2 p-2 rounded" style="background:var(--bg);">
+              <i class="fas fa-clock text-primary"></i>
+              <div><small class="text-muted d-block">Vaqt</small><strong id="modalTime"></strong></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="d-flex align-items-center gap-2 p-2 rounded" style="background:var(--bg);">
+              <i class="fas fa-sign-in-alt text-primary"></i>
+              <div><small class="text-muted d-block">Tur</small><strong id="modalType"></strong></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="d-flex align-items-center gap-2 p-2 rounded" style="background:var(--bg);">
+              <i class="fas fa-map-marker-alt text-danger"></i>
+              <div><small class="text-muted d-block">Lokatsiya</small><strong id="modalLocation"></strong></div>
+            </div>
+          </div>
+          <div class="col-12" id="modalAddressRow" style="display:none;">
+            <div class="d-flex align-items-center gap-2 p-2 rounded" style="background:var(--bg);">
+              <i class="fas fa-building text-secondary"></i>
+              <div><small class="text-muted d-block">Manzil</small><strong id="modalAddress"></strong></div>
+            </div>
+          </div>
+          <div class="col-12" id="modalMapRow" style="display:none;">
+            <div class="p-2 rounded" style="background:var(--bg);">
+              <a id="modalMapLink" href="#" target="_blank" class="btn btn-sm btn-outline-primary">
+                <i class="fas fa-map-marked-alt me-1"></i>Xaritada ko'rish
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer border-0 pt-0 justify-content-between">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Yopish</button>
+        <button type="button" class="btn btn-danger" id="modalDeleteBtn" onclick="deletePhoto()">
+          <i class="fas fa-trash me-1"></i>O'chirish
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.modal-backdrop { background-color: rgba(0,0,0,0.85) !important; }
+.modal-content { border: none; border-radius: 16px; }
+#modalImage { border-radius: 12px; }
+</style>
+
+<script>
+var currentPhotoId = null, currentSource = null;
+
+function openModal(imgUrl, empName, capturedAt, attType, locName, locAddress, locBuilding, lat, lng, source, id) {
+  currentPhotoId = id;
+  currentSource = source;
+  document.getElementById('modalName').textContent = empName;
+  document.getElementById('modalImage').src = imgUrl;
+
+  var parts = capturedAt.split(' ');
+  var datePart = parts[0] || '';
+  var timePart = parts[1] || '';
+
+  if (datePart) {
+    var d = new Date(datePart + 'T' + (timePart || '00:00:00'));
+    document.getElementById('modalDate').textContent = d.toLocaleDateString('uz-UZ', { year:'numeric', month:'long', day:'numeric' });
+    document.getElementById('modalTime').textContent = d.toLocaleTimeString('uz-UZ', { hour:'2-digit', minute:'2-digit' });
+  } else {
+    document.getElementById('modalDate').textContent = capturedAt;
+    document.getElementById('modalTime').textContent = '';
+  }
+
+  document.getElementById('modalType').innerHTML = attType === 'in'
+    ? '<span class="badge badge-ontime"><i class="fas fa-sign-in-alt me-1"></i>Kelish</span>'
+    : '<span class="badge badge-early"><i class="fas fa-sign-out-alt me-1"></i>Chiqish</span>';
+
+  if (locName) {
+    document.getElementById('modalLocation').textContent = locName;
+  } else {
+    document.getElementById('modalLocation').textContent = 'Noma\'lum';
+  }
+
+  var addressInfo = '';
+  if (locBuilding) addressInfo += locBuilding;
+  if (locAddress) {
+    if (addressInfo) addressInfo += ', ';
+    addressInfo += locAddress;
+  }
+
+  if (addressInfo) {
+    document.getElementById('modalAddress').textContent = addressInfo;
+    document.getElementById('modalAddressRow').style.display = '';
+  } else {
+    document.getElementById('modalAddressRow').style.display = 'none';
+  }
+
+  if (lat && lng) {
+    var mapUrl = 'https://www.google.com/maps?q=' + lat + ',' + lng;
+    document.getElementById('modalMapLink').href = mapUrl;
+    document.getElementById('modalMapRow').style.display = '';
+  } else {
+    document.getElementById('modalMapRow').style.display = 'none';
+  }
+
+  var modal = new bootstrap.Modal(document.getElementById('photoModal'));
+  modal.show();
+}
+
+function getCookie(name) {
+  var v = null;
+  if (document.cookie) {
+    var cs = document.cookie.split(';');
+    for (var i = 0; i < cs.length; i++) {
+      var c = cs[i].trim();
+      if (c.substring(0, name.length + 1) === (name + '=')) { v = decodeURIComponent(c.substring(name.length + 1)); break; }
+    }
+  }
+  return v;
+}
+
+function deletePhoto() {
+  if (!currentPhotoId || !currentSource) return;
+  var reason = '';
+  if (currentSource === 'attendance') {
+    reason = prompt('Davomat yozuvini ham o\'chirish? "HA" yozing va Enter bosing, yoki bekor qilish uchun Esc:', '');
+    if (reason === null) return;
+  }
+  var deleteAttendance = (reason && reason.toUpperCase() === 'HA');
+  if (!confirm('Bu rasmni o\'chirishni xohlaysizmi?')) return;
+
+  var formData = new FormData();
+  formData.append('source', currentSource);
+  formData.append('delete_attendance', deleteAttendance ? 'true' : 'false');
+  formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+  fetch('/gallery/delete/' + currentPhotoId + '/', {
+    method: 'POST',
+    headers: { 'X-CSRFToken': getCookie('csrftoken') },
+    body: new URLSearchParams({ source: currentSource, delete_attendance: deleteAttendance ? 'true' : 'false' })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.status === 'success') {
+      bootstrap.Modal.getInstance(document.getElementById('photoModal')).hide();
+      location.reload();
+    } else {
+      alert('Xatolik: ' + data.message);
+    }
+  })
+  .catch(function(err) { alert('Xatolik: ' + err); });
+}
+</script>
+{% endblock %}

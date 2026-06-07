@@ -1,6 +1,7 @@
 # views.py
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.urls import reverse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.db.models import Q, Sum
@@ -17,10 +18,21 @@ from django.contrib.auth.forms import AuthenticationForm, PasswordChangeForm, Se
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
 
-from .models import Employee, Attendance, MonthlySalary, UserProfile
-
+from .models import Employee, Attendance, MonthlySalary, UserProfile, ManualEntryPhoto, Location, FaceCapture, LateAbsenceRecord, CleanupConfig
 
 from .forms import EmployeeForm, UserCreateForm, UserEditForm
+
+import csv
+import io
+from datetime import date, datetime, time, timedelta
+from calendar import monthrange
+from django.db.models import Q, Sum, Count
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
+from django.core.files.base import ContentFile
+import base64
+import uuid
 
 
 
@@ -635,7 +647,20 @@ def add_employee(request):
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES)
         if form.is_valid():
-            employee = form.save()
+            employee = form.save(commit=False)
+            face_image_data = request.POST.get('face_image')
+            if face_image_data:
+                try:
+                    format, imgstr = face_image_data.split(';base64,')
+                    ext = format.split('/')[-1]
+                    import uuid
+                    filename = f"employee_{uuid.uuid4().hex}.{ext}"
+                    from django.core.files.base import ContentFile
+                    import base64
+                    employee.photo.save(filename, ContentFile(base64.b64decode(imgstr)), save=False)
+                except Exception:
+                    pass
+            employee.save()
             messages.success(request, f'{employee.full_name} muvaffaqiyatli qoshildi!')
             return redirect('employee_list')
     else:
@@ -667,7 +692,20 @@ def edit_employee(request, id):
     if request.method == 'POST':
         form = EmployeeForm(request.POST, request.FILES, instance=employee)
         if form.is_valid():
-            employee = form.save()
+            employee = form.save(commit=False)
+            face_image_data = request.POST.get('face_image')
+            if face_image_data:
+                try:
+                    format, imgstr = face_image_data.split(';base64,')
+                    ext = format.split('/')[-1]
+                    import uuid
+                    filename = f"employee_{uuid.uuid4().hex}.{ext}"
+                    from django.core.files.base import ContentFile
+                    import base64
+                    employee.photo.save(filename, ContentFile(base64.b64decode(imgstr)), save=False)
+                except Exception:
+                    pass
+            employee.save()
             messages.success(request, f'{employee.full_name} muvaffaqiyatli yangilandi!')
             return redirect('employee_list')
     else:
@@ -808,6 +846,14 @@ def checkin_page(request):
             'is_work_day': schedule['is_work_day']
         })
 
+    locations = Location.objects.filter(is_active=True)
+    locations_json = json.dumps([{
+        'name': loc.name,
+        'lat': float(loc.latitude) if loc.latitude else 0,
+        'lng': float(loc.longitude) if loc.longitude else 0,
+        'radius': loc.radius_meters,
+    } for loc in locations])
+
     context = {
         'employees': employees,
         'employees_with_schedule': employees_with_schedule,
@@ -818,6 +864,7 @@ def checkin_page(request):
         'btn_color': 'success',
         'icon': 'sign-in-alt',
         'today_day': today.strftime('%A'),
+        'locations_json': locations_json,
     }
     return render(request, 'attendance_face.html', context)
 
@@ -838,6 +885,14 @@ def checkout_page(request):
         if today_checkins.filter(employee=emp).exists() and not today_checkouts.filter(employee=emp).exists():
             employees_with_checkin.append(emp)
 
+    locations = Location.objects.filter(is_active=True)
+    locations_json = json.dumps([{
+        'name': loc.name,
+        'lat': float(loc.latitude) if loc.latitude else 0,
+        'lng': float(loc.longitude) if loc.longitude else 0,
+        'radius': loc.radius_meters,
+    } for loc in locations])
+
     context = {
         'employees': employees_with_checkin,
         'today_checkouts': today_checkouts,
@@ -846,6 +901,7 @@ def checkout_page(request):
         'page_title': 'Chiqish',
         'btn_color': 'danger',
         'icon': 'sign-out-alt',
+        'locations_json': locations_json,
     }
     return render(request, 'attendance_face.html', context)
 
@@ -860,8 +916,30 @@ def mark_attendance(request):
             data = json.loads(request.body.decode('utf-8'))
             employee_id = data.get('employee_id')
             attendance_type = data.get('type', 'in')
+            image_data = data.get('image_data', '')  # Base64 image from camera
+            building_name = data.get('building', '')
+            latitude = data.get('latitude')
+            longitude = data.get('longitude')
 
             employee = get_object_or_404(Employee, id=employee_id)
+
+            # Find location by building name or coordinates
+            location = None
+            if building_name and building_name != 'Noma\'lum':
+                location = Location.objects.filter(name__iexact=building_name, is_active=True).first()
+            if not location and latitude and longitude:
+                try:
+                    lat = float(latitude); lng = float(longitude)
+                    for loc in Location.objects.filter(is_active=True, latitude__isnull=False, longitude__isnull=False):
+                        from math import radians, sin, cos, sqrt, atan2
+                        dlat = radians(lat - float(loc.latitude))
+                        dlng = radians(lng - float(loc.longitude))
+                        a = sin(dlat/2)**2 + cos(radians(float(loc.latitude))) * cos(radians(lat)) * sin(dlng/2)**2
+                        dist = 6371000 * 2 * atan2(sqrt(a), sqrt(1-a))
+                        if dist <= (loc.radius_meters or 100):
+                            location = loc; break
+                except Exception:
+                    pass
             today = date.today()
             now_time = datetime.now().time()
 
@@ -926,6 +1004,45 @@ def mark_attendance(request):
                 penalty_amount=penalty_amount,
                 notes=''
             )
+
+            # Save face photo if provided
+            if image_data:
+                try:
+                    format, imgstr = image_data.split(';base64,')
+                    ext = format.split('/')[-1]
+                    filename = f"face_{employee_id}_{attendance_type}_{today.strftime('%Y%m%d')}_{uuid.uuid4().hex}.{ext}"
+                    photo_file = ContentFile(base64.b64decode(imgstr))
+
+                    attendance.face_photo.save(filename, photo_file, save=True)
+
+                    FaceCapture.objects.create(
+                        employee=employee,
+                        attendance=attendance,
+                        photo=attendance.face_photo,
+                        attendance_type=attendance_type,
+                        location=location,
+                        ip_address=request.META.get('REMOTE_ADDR'),
+                    )
+                except Exception:
+                    pass  # Photo save failure should not block attendance
+
+            # Create LateAbsenceRecord if late
+            if attendance_type == 'in' and late_status == 'late':
+                LateAbsenceRecord.objects.get_or_create(
+                    employee=employee,
+                    date=today,
+                    record_type='late',
+                    defaults={
+                        'late_minutes': late_minutes,
+                        'attendance': attendance
+                    }
+                )
+
+            # Send Telegram notification
+            try:
+                send_telegram_notification(attendance)
+            except Exception:
+                pass
 
             response_data = {
                 'status': 'success',
@@ -1007,6 +1124,8 @@ def daily_attendance_report(request):
 
     attendances = Attendance.objects.filter(date=report_date)
     checkins = attendances.filter(type='in')
+    checkouts = attendances.filter(type='out')
+    checkout_by_employee = {c.employee_id: c for c in checkouts}
 
     # Faqat ish kunlaridagi kelishlarni hisoblaymiz
     present_employees = employees.filter(
@@ -1030,11 +1149,22 @@ def daily_attendance_report(request):
     day_off_count = checkins.filter(status='day_off').count()
     present_count = present_employees.count()
 
+    # Combine checkins with their matching checkout
+    combined_attendances = []
+    for cin in checkins:
+        cout = checkout_by_employee.get(cin.employee_id)
+        combined_attendances.append({
+            'checkin': cin,
+            'checkout': cout.time if cout else None,
+        })
+
     context = {
         'report_date': report_date,
         'employees': employees,
         'total_employees': total_employees,
         'checkins': checkins,
+        'combined_attendances': combined_attendances,
+        'checkouts': checkouts,
         'present_employees': present_employees,
         'absent_employees': absent_employees,
         'present_count': present_count,
@@ -1064,6 +1194,12 @@ def weekly_attendance_report(request):
     except ValueError:
         start_date = start_of_week
         end_date = end_of_week
+
+    # Hafta kunlari nomlarini ingliz tilidan o'zbek tiliga moslashtirish
+    DAY_NAME_UZ = {
+        'monday': 'Dushanba', 'tuesday': 'Seshanba', 'wednesday': 'Chorshanba',
+        'thursday': 'Payshanba', 'friday': 'Juma', 'saturday': 'Shanba', 'sunday': 'Yakshanba'
+    }
 
     all_attendances = Attendance.objects.filter(
         date__gte=start_date,
@@ -1097,7 +1233,7 @@ def weekly_attendance_report(request):
         current_date = start_date
 
         while current_date <= end_date:
-            day_name = current_date.strftime('%A')
+            day_name = DAY_NAME_UZ.get(current_date.strftime('%A').lower(), current_date.strftime('%A'))
             day_checkin = employee_checkins.filter(date=current_date).first()
 
             if day_checkin:
@@ -1110,6 +1246,8 @@ def weekly_attendance_report(request):
                 days_data[day_name] = {
                     'checkin': day_checkin.time,
                     'checkout': day_checkout.time if day_checkout else None,
+                    'checkin_display': day_checkin.date.strftime('%d.%m.%Y') + ' ' + day_checkin.time.strftime('%H:%M'),
+                    'checkout_display': (day_checkout.date.strftime('%d.%m.%Y') + ' ' + day_checkout.time.strftime('%H:%M')) if day_checkout else None,
                     'status': day_checkin.status,
                     'late_minutes': day_checkin.late_minutes,
                     'late_hours': late_hours,
@@ -1120,21 +1258,29 @@ def weekly_attendance_report(request):
 
             current_date += timedelta(days=1)
 
+        late_days = employee_checkins.filter(status='late').count()
         weekly_stats.append({
             'employee': employee,
             'present_days': present_days,
             'days_data': days_data,
-            'late_days': employee_checkins.filter(status='late').count(),
+            'late_days': late_days,
             'early_days': employee_checkins.filter(status='early').count(),
-            'early_leave_days': 0,  # Erta chiqishlar uchun (agar modelda bo'lsa)
+            'early_leave_days': 0,
         })
+
+    total_present = sum(s['present_days'] for s in weekly_stats)
+    total_late = sum(s['late_days'] for s in weekly_stats)
+    total_absent = sum(max(0, employee.get_work_days_count(start_date.year if start_date.year == end_date.year else None, start_date.month) - employee.get_present_days_count(start_date.year, start_date.month)) for employee in employees)
 
     context = {
         'start_date': start_date,
         'end_date': end_date,
         'weekly_stats': weekly_stats,
         'total_employees': employees.count(),
-        'week_days': week_days,  # BU MUHIM - WEEK_DAYS QO'SHILDI!
+        'week_days': week_days,
+        'total_present': total_present,
+        'total_late': total_late,
+        'total_absent': 0,
     }
     return render(request, 'weekly_report.html', context)
 
@@ -1264,6 +1410,107 @@ def monthly_attendance_report(request):
         'total_dayoff': total_dayoff,
     }
     return render(request, 'monthly_report.html', context)
+
+@login_required
+@admin_or_hr_required
+def export_monthly_excel(request):
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    today = date.today()
+    month = int(request.GET.get('month', today.month))
+    year = int(request.GET.get('year', today.year))
+
+    start_of_month = date(year, month, 1)
+    if month == 12:
+        end_of_month = date(year + 1, 1, 1) - timedelta(days=1)
+    else:
+        end_of_month = date(year, month + 1, 1) - timedelta(days=1)
+
+    employees = Employee.objects.filter(is_active=True)
+    attendances = Attendance.objects.filter(
+        date__gte=start_of_month, date__lte=end_of_month, type='in'
+    ).order_by('date', 'time')
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = f"{year}-{month:02d}"
+
+    hdr_font = Font(bold=True, color="FFFFFF", size=11)
+    hdr_fill = PatternFill(start_color="2001FF", end_color="2001FF", fill_type="solid")
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+    center = Alignment(horizontal='center', vertical='center')
+
+    headers = [
+        "T/r", "Xodim", "Lavozimi", "Bo'lim",
+        "Ish kunlari", "Kelgan", "Kelmagan",
+        "Kechikish", "Erta kelish", "Dam olish",
+        "Foiz", "Jarima"
+    ]
+    for col, h in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=h)
+        cell.font = hdr_font
+        cell.fill = hdr_fill
+        cell.alignment = center
+        cell.border = thin_border
+
+    row_num = 2
+    for i, emp in enumerate(employees, 1):
+        work_days = 0
+        current = start_of_month
+        while current <= end_of_month:
+            if current.strftime('%A').lower() in emp.work_days:
+                work_days += 1
+            current += timedelta(days=1)
+
+        emp_att = attendances.filter(employee=emp)
+        present = late = early = day_off = 0
+        penalty = 0
+        for a in emp_att:
+            day_code = a.date.strftime('%A').lower()
+            if day_code in emp.work_days:
+                if a.status == 'day_off':
+                    day_off += 1
+                else:
+                    present += 1
+                    if a.status == 'late':
+                        late += 1
+                        penalty += float(a.penalty_amount)
+                    elif a.status == 'early':
+                        early += 1
+
+        absent = max(0, work_days - (present + day_off))
+        rate = round((present / work_days * 100) if work_days > 0 else 0, 1)
+
+        vals = [
+            i, emp.full_name, emp.position, emp.department,
+            work_days, present, absent, late, early, day_off,
+            rate, penalty
+        ]
+        for col, v in enumerate(vals, 1):
+            cell = ws.cell(row=row_num, column=col, value=v)
+            cell.border = thin_border
+            cell.alignment = center
+        row_num += 1
+
+    ws.column_dimensions['A'].width = 6
+    ws.column_dimensions['B'].width = 28
+    ws.column_dimensions['C'].width = 20
+    ws.column_dimensions['D'].width = 18
+    for c in range(5, 13):
+        ws.column_dimensions[get_column_letter(c)].width = 12
+
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = f'attachment; filename="davomat-{year}-{month:02d}.xlsx"'
+    wb.save(response)
+    return response
+
 @login_required
 @admin_or_hr_required
 def salary_report(request):
@@ -1408,12 +1655,227 @@ def mark_salary_paid(request, salary_id):
         salary.paid_date = date.today()
         salary.save()
 
-        return JsonResponse({
-            'status': 'success',
-            'message': f'{salary.employee.full_name} uchun {salary.month}/{salary.year} oyi maoshi tolandi deb belgilandi'
-        })
+        messages.success(request, f'{salary.employee.full_name} uchun {salary.month}/{salary.year} oyi maoshi to\'landi deb belgilandi')
+        redirect_url = reverse('salary_report')
+        params = {}
+        year = request.POST.get('year')
+        month = request.POST.get('month')
+        emp_id = request.POST.get('employee_id')
+        if year: params['year'] = year
+        if month: params['month'] = month
+        if emp_id: params['employee_id'] = emp_id
+        if params:
+            redirect_url += '?' + '&'.join(f'{k}={v}' for k, v in params.items())
+        return redirect(redirect_url)
 
     return JsonResponse({'status': 'error', 'message': 'Faqat POST soʻrovi'})
+
+
+# ============ GALLERY DELETE PHOTO ============
+
+@login_required
+@admin_or_hr_required
+def gallery_delete_photo(request, record_id):
+    """Galereyadagi rasmni va unga bog'liq davomatni o'chirish"""
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Faqat POST soʻrovi'})
+
+    source = request.POST.get('source', '')
+    delete_attendance = request.POST.get('delete_attendance') == 'true'
+
+    try:
+        if source == 'face_capture':
+            obj = get_object_or_404(FaceCapture, id=record_id)
+            attendance = obj.attendance
+            # Delete photo file
+            if obj.photo:
+                storage = obj.photo.storage
+                if storage.exists(obj.photo.name):
+                    storage.delete(obj.photo.name)
+            obj.delete()
+            message = 'Rasm o\'chirildi'
+            if delete_attendance and attendance:
+                attendance.delete()
+                message += ' va davomat o\'chirildi'
+        elif source == 'attendance':
+            obj = get_object_or_404(Attendance, id=record_id)
+            if obj.face_photo:
+                storage = obj.face_photo.storage
+                if storage.exists(obj.face_photo.name):
+                    storage.delete(obj.face_photo.name)
+            if delete_attendance:
+                obj.delete()
+                message = 'Rasm va davomat o\'chirildi'
+            else:
+                obj.face_photo = None
+                obj.save()
+                message = 'Rasm o\'chirildi (davomat saqlandi)'
+        else:
+            return JsonResponse({'status': 'error', 'message': 'Noto\'g\'ri manba'})
+
+        return JsonResponse({'status': 'success', 'message': message})
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)})
+
+
+# ============ ADMIN CLEANUP SETTINGS ============
+
+@login_required
+@admin_or_hr_required
+def cleanup_settings(request):
+    """Eski ma'lumotlarni ko'rish va tozalash sahifasi"""
+    today = date.today()
+
+    if request.method == 'POST' and request.POST.get('action') == 'save_auto':
+        config, _ = CleanupConfig.objects.get_or_create(pk=1)
+        config.auto_enabled = request.POST.get('auto_enabled') == 'on'
+        config.months_back = int(request.POST.get('months_back', 2))
+        config.interval_days = int(request.POST.get('interval_days', 60))
+        config.clean_face_captures = request.POST.get('clean_face_captures') == 'on'
+        config.clean_attendance_photos = request.POST.get('clean_attendance_photos') == 'on'
+        config.clean_attendance_records = request.POST.get('clean_attendance_records') == 'on'
+        config.save()
+        messages.success(request, 'Avtomatik tozalash sozlamalari saqlandi')
+        return redirect('cleanup_settings')
+
+    target_year = request.GET.get('target_year')
+    target_month = request.GET.get('target_month')
+    months_back = int(request.GET.get('months', 2))
+    cutoff_date = today - timedelta(days=months_back * 30)
+
+    if target_year and target_month:
+        y, m = int(target_year), int(target_month)
+        month_start = date(y, m, 1)
+        if m == 12:
+            month_end = date(y + 1, 1, 1)
+        else:
+            month_end = date(y, m + 1, 1)
+
+        old_face_captures = FaceCapture.objects.filter(captured_at__date__gte=month_start, captured_at__date__lt=month_end).order_by('-captured_at')[:100]
+        old_attendance_photos = Attendance.objects.exclude(face_photo='').filter(date__gte=month_start, date__lt=month_end).order_by('-date')[:100]
+        old_attendance_records = Attendance.objects.filter(date__gte=month_start, date__lt=month_end).order_by('-date')[:100]
+
+        total_face_captures = FaceCapture.objects.filter(captured_at__date__gte=month_start, captured_at__date__lt=month_end).count()
+        total_attendance_photos = Attendance.objects.exclude(face_photo='').filter(date__gte=month_start, date__lt=month_end).count()
+        total_attendance_records = Attendance.objects.filter(date__gte=month_start, date__lt=month_end).count()
+    else:
+        old_face_captures = FaceCapture.objects.filter(captured_at__date__lt=cutoff_date).order_by('-captured_at')[:100]
+        old_attendance_photos = Attendance.objects.exclude(face_photo='').filter(date__lt=cutoff_date).order_by('-date')[:100]
+        old_attendance_records = Attendance.objects.filter(date__lt=cutoff_date).order_by('-date')[:100]
+
+        total_face_captures = FaceCapture.objects.filter(captured_at__date__lt=cutoff_date).count()
+        total_attendance_photos = Attendance.objects.exclude(face_photo='').filter(date__lt=cutoff_date).count()
+        total_attendance_records = Attendance.objects.filter(date__lt=cutoff_date).count()
+
+    auto_config = CleanupConfig.objects.filter(pk=1).first()
+
+    months_list = [
+        (1, 'Yanvar'), (2, 'Fevral'), (3, 'Mart'), (4, 'Aprel'),
+        (5, 'May'), (6, 'Iyun'), (7, 'Iyul'), (8, 'Avgust'),
+        (9, 'Sentabr'), (10, 'Oktabr'), (11, 'Noyabr'), (12, 'Dekabr')
+    ]
+    years_list = list(range(today.year - 3, today.year + 1))
+    years_list.reverse()
+
+    context = {
+        'target_year': int(target_year) if target_year else None,
+        'target_month': int(target_month) if target_month else None,
+        'month_start': month_start if target_year and target_month else None,
+        'month_end': month_end if target_year and target_month else None,
+        'months_back': months_back,
+        'cutoff_date': cutoff_date,
+        'old_face_captures': old_face_captures,
+        'old_attendance_photos': old_attendance_photos,
+        'old_attendance_records': old_attendance_records,
+        'total_face_captures': total_face_captures,
+        'total_attendance_photos': total_attendance_photos,
+        'total_attendance_records': total_attendance_records,
+        'auto_config': auto_config,
+        'months_list': months_list,
+        'years_list': years_list,
+    }
+    return render(request, 'cleanup_settings.html', context)
+
+
+@login_required
+@admin_or_hr_required
+def run_cleanup(request):
+    """Tozalashni amalga oshirish (oylik yoki eski ma'lumotlar)"""
+    if request.method != 'POST':
+        messages.error(request, 'Faqat POST soʻrovi')
+        return redirect('cleanup_settings')
+
+    target_year = request.POST.get('target_year')
+    target_month = request.POST.get('target_month')
+    data_types = request.POST.getlist('data_types')
+
+    try:
+        if target_year and target_month:
+            y, m = int(target_year), int(target_month)
+            month_start = date(y, m, 1)
+            if m == 12:
+                month_end = date(y + 1, 1, 1)
+            else:
+                month_end = date(y, m + 1, 1)
+        else:
+            months_back = int(request.POST.get('months', 2))
+            cutoff_date = date.today() - timedelta(days=months_back * 30)
+
+        deleted_parts = []
+        if 'face_captures' in data_types:
+            if target_year and target_month:
+                qs = FaceCapture.objects.filter(captured_at__date__gte=month_start, captured_at__date__lt=month_end)
+            else:
+                qs = FaceCapture.objects.filter(captured_at__date__lt=cutoff_date)
+            count = qs.count()
+            for obj in qs:
+                if obj.photo:
+                    try:
+                        storage = obj.photo.storage
+                        if storage.exists(obj.photo.name):
+                            storage.delete(obj.photo.name)
+                    except Exception:
+                        pass
+            qs.delete()
+            if count:
+                deleted_parts.append(f"Face ID rasmlar: {count}")
+
+        if 'attendance_photos' in data_types:
+            if target_year and target_month:
+                qs = Attendance.objects.exclude(face_photo='').filter(date__gte=month_start, date__lt=month_end)
+            else:
+                qs = Attendance.objects.exclude(face_photo='').filter(date__lt=cutoff_date)
+            count = qs.count()
+            for obj in qs:
+                if obj.face_photo:
+                    try:
+                        storage = obj.face_photo.storage
+                        if storage.exists(obj.face_photo.name):
+                            storage.delete(obj.face_photo.name)
+                    except Exception:
+                        pass
+            qs.delete()
+            if count:
+                deleted_parts.append(f"Davomat rasmlar: {count}")
+
+        if 'attendance_records' in data_types:
+            if target_year and target_month:
+                qs = Attendance.objects.filter(date__gte=month_start, date__lt=month_end)
+            else:
+                qs = Attendance.objects.filter(date__lt=cutoff_date)
+            count = qs.count()
+            qs.delete()
+            if count:
+                deleted_parts.append(f"Davomat yozuvlari: {count}")
+
+        if deleted_parts:
+            messages.success(request, 'Tozalash yakunlandi: ' + ', '.join(deleted_parts))
+        else:
+            messages.info(request, 'O\'chiriladigan ma\'lumot topilmadi')
+    except Exception as e:
+        messages.error(request, f'Xatolik: {str(e)}')
+
+    return redirect('cleanup_settings')
 
 
 # ============ QO'SHIMCHA API (barcha foydalanuvchilar) ============
@@ -1568,3 +2030,565 @@ def monthly_penalty_report(request):
     }
 
     return render(request, 'monthly_penalty_report.html', context)
+
+
+# ============ TELEGRAM BOT INTEGRATION ============
+
+import requests
+
+TELEGRAM_BOT_TOKEN = None  # Set in settings.py or environment
+TELEGRAM_CHAT_ID = None    # Set in settings.py or environment
+
+def get_telegram_config():
+    from django.conf import settings
+    token = getattr(settings, 'TELEGRAM_BOT_TOKEN', None) or TELEGRAM_BOT_TOKEN
+    chat_id = getattr(settings, 'TELEGRAM_CHAT_ID', None) or TELEGRAM_CHAT_ID
+    return token, chat_id
+
+def send_telegram_notification(attendance):
+    token, chat_id = get_telegram_config()
+    if not token or not chat_id:
+        return False
+
+    emp = attendance.employee
+    type_text = "✅ KELDI" if attendance.type == 'in' else "❌ CHIQDI"
+    status_text = dict(Attendance.STATUS_CHOICES).get(attendance.status, attendance.status)
+
+    text = (
+        f"<b>🆔 Face ID - {type_text}</b>\n"
+        f"━━━━━━━━━━━━━━━━\n"
+        f"👤 <b>Xodim:</b> {emp.full_name}\n"
+        f"💼 <b>Lavozim:</b> {emp.position}\n"
+        f"🏢 <b>Bo'lim:</b> {emp.department}\n"
+        f"📅 <b>Sana:</b> {attendance.date.strftime('%d.%m.%Y')}\n"
+        f"⏰ <b>Vaqt:</b> {attendance.time.strftime('%H:%M')}\n"
+        f"📊 <b>Holat:</b> {status_text}\n"
+    )
+
+    if attendance.late_minutes > 0:
+        text += f"⏳ <b>Kechikish:</b> {attendance.late_minutes} daq.\n"
+        text += f"💰 <b>Jarima:</b> {attendance.penalty_amount:,.0f} so'm\n"
+
+    try:
+        url = f"https://api.telegram.org/bot{token}/sendMessage"
+        resp = requests.post(url, json={
+            'chat_id': chat_id,
+            'text': text,
+            'parse_mode': 'HTML'
+        }, timeout=10)
+        return resp.ok
+    except Exception:
+        return False
+
+
+# ============ FACE PHOTO GALLERY ============
+
+@login_required
+@admin_or_hr_required
+def face_gallery(request):
+    employee_id = request.GET.get('employee_id') or None
+    selected_date = request.GET.get('date') or None
+    selected_type = request.GET.get('type') or None
+
+    face_captures = FaceCapture.objects.select_related('employee', 'location')
+    attendance_photos = Attendance.objects.select_related('employee').exclude(face_photo='')
+
+    employee_filter = {}
+    date_filter_cap = {}
+    date_filter_att = {}
+    type_filter_cap = {}
+    type_filter_att = {}
+
+    if employee_id:
+        employee_filter = {'employee_id': employee_id}
+    if selected_date:
+        date_filter_cap = {**date_filter_cap, 'captured_at__date': selected_date}
+        date_filter_att = {**date_filter_att, 'date': selected_date}
+    if selected_type:
+        type_filter_cap = {**type_filter_cap, 'attendance_type': selected_type}
+        type_filter_att = {**type_filter_att, 'type': selected_type}
+
+    face_captures = face_captures.filter(**employee_filter, **date_filter_cap, **type_filter_cap)
+    attendance_photos = attendance_photos.filter(**employee_filter, **date_filter_att, **type_filter_att)
+
+    # Deduplicate: skip Attendance records that already have a matching FaceCapture
+    face_capture_att_ids = set(fc.attendance_id for fc in face_captures if fc.attendance_id)
+    face_capture_keys = set((fc.employee_id, fc.captured_at.date(), fc.attendance_type) for fc in face_captures)
+
+    combined = []
+    for fc in face_captures:
+        loc = fc.location
+        combined.append({
+            'id': fc.id,
+            'employee_name': fc.employee.full_name,
+            'employee_id': fc.employee_id,
+            'photo_url': fc.photo.url if fc.photo else '',
+            'attendance_type': fc.attendance_type,
+            'location_name': loc.name if loc else '',
+            'location_address': loc.address if loc else '',
+            'location_building': loc.building if loc else '',
+            'latitude': str(loc.latitude) if loc and loc.latitude else '',
+            'longitude': str(loc.longitude) if loc and loc.longitude else '',
+            'captured_at': fc.captured_at,
+            'source': 'face_capture',
+        })
+    for att in attendance_photos:
+        if att.id in face_capture_att_ids:
+            continue
+        att_key = (att.employee_id, att.date, att.type)
+        if att_key in face_capture_keys:
+            continue
+        naive_dt = datetime.combine(att.date, att.time)
+        aware_dt = timezone.make_aware(naive_dt) if timezone.is_naive(naive_dt) else naive_dt
+        combined.append({
+            'id': att.id,
+            'employee_name': att.employee.full_name,
+            'employee_id': att.employee_id,
+            'photo_url': att.face_photo.url if att.face_photo else '',
+            'attendance_type': att.type,
+            'location_name': '',
+            'location_address': '',
+            'location_building': '',
+            'latitude': '',
+            'longitude': '',
+            'captured_at': aware_dt,
+            'source': 'attendance',
+        })
+
+    combined.sort(key=lambda x: x['captured_at'], reverse=True)
+    total_photos = len(combined)
+
+    today_start_naive = datetime.combine(date.today(), time.min)
+    today_start = timezone.make_aware(today_start_naive) if timezone.is_naive(today_start_naive) else today_start_naive
+    today_photos = sum(1 for p in combined if p['captured_at'] >= today_start)
+
+    employees = Employee.objects.filter(is_active=True).order_by('first_name')
+
+    paginator = Paginator(combined, 24)
+    page_number = request.GET.get('page')
+    photos_page = paginator.get_page(page_number)
+
+    context = {
+        'photos': photos_page,
+        'employees': employees,
+        'selected_employee': employee_id,
+        'selected_date': selected_date,
+        'selected_type': selected_type,
+        'total_photos': total_photos,
+        'today_photos': today_photos,
+    }
+    return render(request, 'gallery.html', context)
+
+
+# ============ LOCATION MANAGEMENT ============
+
+@login_required
+@admin_or_hr_required
+def location_list(request):
+    locations = Location.objects.all()
+    locations_json = json.dumps([{
+        'id': loc.id,
+        'name': loc.name,
+        'building': loc.building,
+        'address': loc.address,
+        'lat': str(loc.latitude) if loc.latitude else None,
+        'lng': str(loc.longitude) if loc.longitude else None,
+        'radius': loc.radius_meters,
+        'branch_name': loc.branch_name,
+        'is_active': loc.is_active,
+    } for loc in locations])
+    return render(request, 'location_list.html', {
+        'locations': locations,
+        'locations_json': locations_json,
+    })
+
+
+@login_required
+@admin_only_required
+def location_add(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        building = request.POST.get('building')
+        address = request.POST.get('address')
+        latitude = request.POST.get('latitude')
+        longitude = request.POST.get('longitude')
+        radius_meters = request.POST.get('radius_meters', 100)
+        branch_name = request.POST.get('branch_name', '')
+        is_active = request.POST.get('is_active') == 'on'
+
+        Location.objects.create(
+            name=name, building=building, address=address,
+            latitude=latitude or None, longitude=longitude or None,
+            radius_meters=radius_meters, branch_name=branch_name,
+            is_active=is_active
+        )
+        messages.success(request, 'Lokatsiya qo\'shildi!')
+        return redirect('location_list')
+
+    return render(request, 'location_form.html', {'location': None})
+
+
+@login_required
+@admin_only_required
+def location_edit(request, id):
+    location = get_object_or_404(Location, id=id)
+    if request.method == 'POST':
+        location.name = request.POST.get('name')
+        location.building = request.POST.get('building')
+        location.address = request.POST.get('address')
+        location.latitude = request.POST.get('latitude') or None
+        location.longitude = request.POST.get('longitude') or None
+        location.radius_meters = request.POST.get('radius_meters', 100)
+        location.branch_name = request.POST.get('branch_name', '')
+        location.is_active = request.POST.get('is_active') == 'on'
+        location.save()
+        messages.success(request, 'Lokatsiya yangilandi!')
+        return redirect('location_list')
+
+    return render(request, 'location_form.html', {'location': location})
+
+
+@csrf_exempt
+@login_required
+@admin_only_required
+def location_delete(request, id):
+    if request.method == 'POST':
+        location = get_object_or_404(Location, id=id)
+        location.delete()
+        return JsonResponse({'status': 'success'})
+    return JsonResponse({'status': 'error', 'message': 'Faqat POST'}, status=405)
+
+
+# ============ FORCE CACHE REFRESH ============
+
+@login_required
+@admin_only_required
+def force_cache_refresh(request):
+    if request.method == 'POST':
+        employees = Employee.objects.all()
+        for emp in employees:
+            emp.cache_version += 1
+            emp.save()
+        messages.success(request, f'Barcha {employees.count()} xodimning kesh ma\'lumotlari yangilandi!')
+        return redirect('dashboard')
+    return redirect('dashboard')
+
+
+# ============ LATE / ABSENCE MONITORING ============
+
+@login_required
+@admin_or_hr_required
+def late_monitoring(request):
+    record_type = request.GET.get('type', 'late')
+    employee_id = request.GET.get('employee_id')
+
+    today = date.today()
+    month = int(request.GET.get('month', today.month))
+    year = int(request.GET.get('year', today.year))
+
+    start_date = date(year, month, 1)
+    if month == 12:
+        end_date = date(year + 1, 1, 1)
+    else:
+        end_date = date(year, month + 1, 1)
+
+    records = LateAbsenceRecord.objects.select_related('employee', 'attendance').filter(
+        record_type=record_type,
+        date__gte=start_date,
+        date__lt=end_date,
+    )
+
+    if employee_id:
+        records = records.filter(employee_id=employee_id)
+
+    total_minutes = records.aggregate(total=Sum('late_minutes'))['total'] or 0
+    total_records = records.count()
+
+    # Per-employee summary for the month
+    emp_summary_raw = records.values('employee_id').annotate(
+        total_count=Count('id'),
+        total_late_minutes=Sum('late_minutes'),
+    ).order_by('-total_count')
+    employee_summary = []
+    for item in emp_summary_raw:
+        emp = Employee.objects.filter(id=item['employee_id']).first()
+        if emp:
+            employee_summary.append({
+                'employee': emp,
+                'total_count': item['total_count'],
+                'total_late_minutes': item['total_late_minutes'] or 0,
+            })
+
+    paginator = Paginator(records, 50)
+    page = request.GET.get('page')
+    records_page = paginator.get_page(page)
+
+    employees = Employee.objects.filter(is_active=True).order_by('first_name')
+
+    month_name_uz = ['', 'Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr']
+
+    context = {
+        'records': records_page,
+        'employees': employees,
+        'record_type': record_type,
+        'selected_employee': employee_id,
+        'month': month,
+        'year': year,
+        'month_name': month_name_uz[month],
+        'start_date': start_date,
+        'end_date': end_date,
+        'total_records': total_records,
+        'total_minutes': total_minutes,
+        'total_employees': employees.count(),
+        'employee_summary': employee_summary,
+    }
+    return render(request, 'late_monitoring.html', context)
+
+
+@login_required
+@admin_or_hr_required
+def late_monitoring_detail(request, employee_id):
+    employee = get_object_or_404(Employee, id=employee_id)
+    record_type = request.GET.get('type', 'late')
+
+    today = date.today()
+    month = int(request.GET.get('month', today.month))
+    year = int(request.GET.get('year', today.year))
+
+    start_date = date(year, month, 1)
+    if month == 12:
+        end_date = date(year + 1, 1, 1)
+    else:
+        end_date = date(year, month + 1, 1)
+
+    records = LateAbsenceRecord.objects.filter(
+        employee=employee,
+        record_type=record_type,
+        date__gte=start_date,
+        date__lt=end_date
+    ).order_by('-date')
+
+    months_list = [(1, 'Yanvar'), (2, 'Fevral'), (3, 'Mart'), (4, 'Aprel'),
+                   (5, 'May'), (6, 'Iyun'), (7, 'Iyul'), (8, 'Avgust'),
+                   (9, 'Sentabr'), (10, 'Oktabr'), (11, 'Noyabr'), (12, 'Dekabr')]
+    current_year = date.today().year
+    years = range(current_year - 5, current_year + 1)
+
+    context = {
+        'employee': employee,
+        'records': records,
+        'record_type': record_type,
+        'month': month,
+        'year': year,
+        'months': months_list,
+        'years': years,
+    }
+    return render(request, 'late_monitoring_detail.html', context)
+
+
+@login_required
+@admin_or_hr_required
+def late_record_edit(request, record_id):
+    record = get_object_or_404(LateAbsenceRecord, id=record_id)
+    if request.method == 'POST':
+        record.reason = request.POST.get('reason', '')
+        record.admin_note = request.POST.get('admin_note', '')
+        record.save()
+        messages.success(request, 'Ma\'lumot yangilandi!')
+        from_list = request.POST.get('from_list')
+        if from_list:
+            return redirect(f"{reverse('late_monitoring')}?type={record.record_type}")
+        return redirect('late_monitoring_detail', employee_id=record.employee_id)
+    return render(request, 'late_monitoring_form.html', {'record': record})
+
+
+# ============ REPORTS - PDF EXPORT ============
+
+@login_required
+@admin_or_hr_required
+def export_report_pdf(request):
+    report_type = request.GET.get('type', 'daily')
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+
+    today = date.today()
+
+    if report_type == 'daily':
+        start_date = end_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else today
+    elif report_type == 'weekly':
+        start_of_week = today - timedelta(days=today.weekday())
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else start_of_week
+        end_date = start_date + timedelta(days=6)
+    else:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else date(today.year, today.month, 1)
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else today
+
+    if end_date < start_date:
+        start_date, end_date = end_date, start_date
+
+    attendances = Attendance.objects.filter(
+        date__gte=start_date, date__lte=end_date
+    ).select_related('employee').order_by('date', 'time')
+
+    employees_data = []
+    for att in attendances:
+        employees_data.append({
+            'employee': att.employee,
+            'date': att.date,
+            'time': att.time,
+            'type': att.type_display,
+            'status': att.get_status_display(),
+            'late_minutes': att.late_minutes,
+            'penalty_amount': att.penalty_amount,
+        })
+
+    total_count = len(employees_data)
+    ontime_count = attendances.filter(status='ontime').count()
+    late_count = attendances.filter(status='late').count()
+    absent_count = attendances.filter(status='absent').count()
+    day_off_count = attendances.filter(status='day_off').count()
+
+    context = {
+        'report_type': report_type,
+        'start_date': start_date,
+        'end_date': end_date,
+        'employees_data': employees_data,
+        'total_stats': {
+            'total': total_count,
+            'ontime': ontime_count,
+            'late': late_count,
+            'absent': absent_count,
+            'day_off': day_off_count,
+        }
+    }
+    return render(request, 'report_pdf.html', context)
+
+
+# ============ EXPORT EXCEL (Enhanced) ============
+
+@login_required
+@admin_or_hr_required
+def export_excel_report(request):
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    start_date_str = request.GET.get('start_date')
+    end_date_str = request.GET.get('end_date')
+    today = date.today()
+
+    try:
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d').date() if start_date_str else date(today.year, today.month, 1)
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d').date() if end_date_str else today
+    except (ValueError, TypeError):
+        start_date = date(today.year, today.month, 1)
+        end_date = today
+
+    if end_date < start_date:
+        start_date, end_date = end_date, start_date
+
+    attendances = Attendance.objects.filter(
+        date__gte=start_date, date__lte=end_date
+    ).select_related('employee').order_by('date', 'time')
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Hisobot"
+
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="4F46E5", end_color="4F46E5", fill_type="solid")
+    thin_border = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+
+    headers = ['T/r', 'Xodim', 'Lavozimi', "Bo'lim", 'Sana', 'Vaqt', 'Tur', 'Holat', 'Kechikish (daq.)', 'Jarima']
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+        cell.border = thin_border
+
+    for i, att in enumerate(attendances, 1):
+        row = i + 1
+        data = [
+            i, att.employee.full_name, att.employee.position,
+            att.employee.department, att.date.strftime('%d.%m.%Y'),
+            att.time.strftime('%H:%M'), att.type_display,
+            att.get_status_display(), att.late_minutes,
+            float(att.penalty_amount)
+        ]
+        for col, val in enumerate(data, 1):
+            cell = ws.cell(row=row, column=col, value=val)
+            cell.border = thin_border
+            cell.alignment = Alignment(horizontal='center' if col in [1, 5, 6, 7, 8, 9, 10] else 'left')
+
+    for col in range(1, len(headers) + 1):
+        ws.column_dimensions[get_column_letter(col)].width = 18
+
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename=hisobot_{start_date}_{end_date}.xlsx'
+    wb.save(response)
+    return response
+
+
+# ============ FIX ACCOUNTS - PASSWORD CHANGE ============
+
+@login_required
+def password_change_view(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Parolingiz muvaffaqiyatli o\'zgartirildi!')
+            return redirect('profile')
+        else:
+            messages.error(request, 'Iltimos, xatolarni to\'g\'rilang.')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'admin/password_change_form.html', {'form': form})
+
+
+# ============ OLD-STYLE EMPLOYEE FORM ============
+
+@login_required
+@admin_or_hr_required
+def add_employee_old(request):
+    if request.method == 'POST':
+        form = EmployeeForm(request.POST, request.FILES)
+        if form.is_valid():
+            employee = form.save()
+            messages.success(request, f'{employee.full_name} muvaffaqiyatli qo\'shildi!')
+            return redirect('employee_list')
+        else:
+            messages.error(request, 'Iltimos, xatolarni to\'g\'rilang.')
+    else:
+        form = EmployeeForm()
+    return render(request, 'employee_form_old.html', {
+        'form': form,
+        'employee': None,
+        'is_add': True,
+    })
+
+
+@login_required
+@admin_or_hr_required
+def edit_employee_old(request, id):
+    employee = get_object_or_404(Employee, id=id)
+    if request.method == 'POST':
+        form = EmployeeForm(request.POST, request.FILES, instance=employee)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'{employee.full_name} ma\'lumotlari yangilandi!')
+            return redirect('employee_detail', id=employee.id)
+        else:
+            messages.error(request, 'Iltimos, xatolarni to\'g\'rilang.')
+    else:
+        form = EmployeeForm(instance=employee)
+    return render(request, 'employee_form_old.html', {
+        'form': form,
+        'employee': employee,
+        'is_add': False,
+    })

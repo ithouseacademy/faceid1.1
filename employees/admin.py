@@ -1,8 +1,5 @@
 from django.contrib import admin
-from .models import Employee, Attendance, MonthlySalary
-# admin.py ga qo'shing
-from django.contrib import admin
-from .models import ManualEntryPhoto
+from .models import Employee, Attendance, MonthlySalary, ManualEntryPhoto, Location, FaceCapture, LateAbsenceRecord
 
 @admin.register(ManualEntryPhoto)
 class ManualEntryPhotoAdmin(admin.ModelAdmin):
@@ -63,3 +60,22 @@ class MonthlySalaryAdmin(admin.ModelAdmin):
     list_filter = ('year', 'month', 'is_paid', 'employee__department')
     search_fields = ('employee__first_name', 'employee__last_name')
     readonly_fields = ('created_at', 'updated_at')
+
+@admin.register(Location)
+class LocationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'building', 'address', 'radius_meters', 'is_active')
+    list_filter = ('is_active',)
+    search_fields = ('name', 'building', 'address')
+
+@admin.register(FaceCapture)
+class FaceCaptureAdmin(admin.ModelAdmin):
+    list_display = ('employee', 'attendance_type', 'captured_at', 'location')
+    list_filter = ('attendance_type', 'captured_at', 'location')
+    search_fields = ('employee__first_name', 'employee__last_name')
+    readonly_fields = ('captured_at',)
+
+@admin.register(LateAbsenceRecord)
+class LateAbsenceRecordAdmin(admin.ModelAdmin):
+    list_display = ('employee', 'record_type', 'date', 'late_minutes', 'reason')
+    list_filter = ('record_type', 'date', 'employee__department')
+    search_fields = ('employee__first_name', 'employee__last_name')

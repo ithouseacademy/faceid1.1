@@ -1,476 +1,162 @@
 <!DOCTYPE html>
 <html lang="uz">
-    {% load static %}
+{% load static %}
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ employee.full_name }} - Ma'lumotlar</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <title>{{ employee.full_name }} - Xodim Ma'lumotlari</title>
+    <link rel="icon" type="image/png" href="{% static 'img/sklatlogo.png' %}">
+    <link rel="apple-touch-icon" sizes="512x512" href="{% static 'img/sklatlogo.png' %}">
     <link rel="manifest" href="{% static 'manifest.json' %}">
-<meta name="theme-color" content="#0d6efd">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        /* Oddiy va toza dizayn */
-        body {
-            background-color: #f8f9fa;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            padding: 15px;
-        }
-        
-        .profile-container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-        
-        /* Sarlavha qismi */
-        .profile-header {
-            background: white;
-            border-radius: 15px;
-            padding: 30px 20px;
-            text-align: center;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.08);
-            margin-bottom: 20px;
-        }
-        
-        .profile-img {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 4px solid #4a6bff;
-            margin-bottom: 15px;
-        }
-        
-        .profile-name {
-            font-size: 24px;
-            font-weight: 700;
-            color: #333;
-            margin-bottom: 5px;
-        }
-        
-        .profile-position {
-            color: #666;
-            font-size: 16px;
-            margin-bottom: 15px;
-        }
-        
-        .department-badge {
-            background: #eef2ff;
-            color: #4a6bff;
-            padding: 6px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        /* Ma'lumot kartalari */
-        .info-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.05);
-            border: 1px solid #eee;
-        }
-        
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #4a6bff;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #eef2ff;
-        }
-        
-        /* Ma'lumot qatorlari */
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .info-row:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        
-        .info-label {
-            color: #666;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        
-        .info-value {
-            color: #333;
-            font-weight: 500;
-            text-align: right;
-        }
-        
-        /* Ish kunlari */
-        .work-days {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        
-        .day-badge {
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            background: #f5f5f5;
-            color: #666;
-        }
-        
-        .day-badge.active {
-            background: #4a6bff;
-            color: white;
-        }
-        
-        /* Davomat jadvali */
-        .attendance-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .attendance-table th {
-            background: #f8f9fa;
-            padding: 12px;
-            font-size: 14px;
-            color: #666;
-            font-weight: 600;
-            border-bottom: 2px solid #eee;
-        }
-        
-        .attendance-table td {
-            padding: 12px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        
-        .status-badge {
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-        
-        .status-in {
-            background: rgba(16, 185, 129, 0.1);
-            color: #10b981;
-        }
-        
-        .status-out {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-        }
-        
-        /* Tugmalar */
-        .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        .action-btn {
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 500;
-            text-decoration: none;
-            text-align: center;
-            display: block;
-            transition: all 0.2s;
-        }
-        
-        .btn-back {
-            background: white;
-            border: 2px solid #ddd;
-            color: #333;
-        }
-        
-        .btn-back:hover {
-            border-color: #4a6bff;
-            background: #f8f9ff;
-        }
-        
-        .btn-edit {
-            background: #f59e0b;
-            color: white;
-            border: none;
-        }
-        
-        .btn-edit:hover {
-            background: #eab308;
-        }
-        
-        .btn-delete {
-            background: #ef4444;
-            color: white;
-            border: none;
-        }
-        
-        .btn-delete:hover {
-            background: #dc2626;
-        }
-        
-        /* Bo'sh holat */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #999;
-        }
-        
-        /* Mobil uchun optimallashtirish */
-        @media (max-width: 768px) {
-            .profile-header {
-                padding: 20px 15px;
-            }
-            
-            .profile-img {
-                width: 100px;
-                height: 100px;
-            }
-            
-            .profile-name {
-                font-size: 20px;
-            }
-            
-            .info-card {
-                padding: 15px;
-            }
-            
-            .action-buttons {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 </head>
 <body>
-    <div class="profile-container">
-        <!-- Profil sarlavhasi -->
-        <button class="btn-back" onclick="history.back()"><i class="fas fa-arrow-left me-1"></i>Orqaga</button>
-        <div class="profile-header">
-            {% if employee.photo %}
-            <img src="{{ employee.photo.url }}" class="profile-img" alt="{{ employee.full_name }}">
+    <div class="container py-4" style="max-width: 1000px;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <a href="{% url 'dashboard' %}" class="btn btn-light">
+                <i class="fas fa-arrow-left me-1"></i>Dashboard
+            </a>
+            <div class="d-flex gap-2">
+                <a href="{% url 'reports' %}?employee_id={{ employee.id }}" class="btn btn-outline-success">
+                    <i class="fas fa-download me-1"></i>Hisobot
+                </a>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 text-center mb-4 fade-in">
+            {% if employee.get_image_url %}
+            <img src="{{ employee.get_image_url }}" class="rounded-circle mx-auto mb-3" width="120" height="120" style="object-fit:cover;" alt="{{ employee.full_name }}">
             {% else %}
-            <div class="profile-img d-flex align-items-center justify-content-center mx-auto mb-3 bg-light">
+            <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center mx-auto mb-3" style="width:120px;height:120px;">
                 <i class="fas fa-user text-primary fa-3x"></i>
             </div>
             {% endif %}
-            
-            <h1 class="profile-name">{{ employee.full_name }}</h1>
-            <p class="profile-position">{{ employee.position }}</p>
-            <div class="department-badge">
+            <h1 class="h3 fw-bold mb-1">{{ employee.full_name }}</h1>
+            <p class="text-muted mb-2">{{ employee.position }}</p>
+            <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2">
                 <i class="fas fa-building me-1"></i>{{ employee.department }}
-            </div>
+            </span>
         </div>
-        
-        <!-- Ma'lumotlar qismi -->
-        <div class="row g-3">
-            <!-- Chap ustun -->
+
+        <div class="row g-3 fade-in">
             <div class="col-md-6">
-                <!-- Ish jadvali -->
-                <div class="info-card">
-                    <h3 class="card-title">Ish Jadvali</h3>
-                    
-                    <div class="info-row">
-                        <div class="info-label">Ish vaqti</div>
-                        <div class="info-value">
-                            <i class="fas fa-clock text-warning me-1"></i>
-                            {{ employee.start_time|time:"H:i" }} - {{ employee.end_time|time:"H:i" }}
+                <div class="card mb-3">
+                    <div class="card-header"><i class="fas fa-info-circle text-primary me-2"></i>Asosiy Ma'lumotlar</div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
+                            <span class="text-muted">To'liq ism</span>
+                            <span class="fw-semibold">{{ employee.full_name }}</span>
                         </div>
-                    </div>
-                    
-                    <div class="info-row">
-                        <div class="info-label">Ish kunlari</div>
-                        <div class="info-value">
-                            <div class="work-days">
-                                {% for day_code, day_name in employee.WORK_DAYS_CHOICES %}
-                                <span class="day-badge {% if day_code in employee.work_days %}active{% endif %}">
-                                    {{ day_name }}
-                                </span>
-                                {% endfor %}
-                            </div>
+                        <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
+                            <span class="text-muted">Lavozim</span>
+                            <span class="fw-semibold">{{ employee.position }}</span>
                         </div>
-                    </div>
-                    
-                    <div class="info-row">
-                        <div class="info-label">Maosh</div>
-                        <div class="info-value">
-                            <strong>{{ employee.monthly_salary|floatformat:0 }} so'm</strong>
+                        <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
+                            <span class="text-muted">Bo'lim</span>
+                            <span class="fw-semibold">{{ employee.department }}</span>
                         </div>
-                    </div>
-                    
-                    <div class="info-row">
-                        <div class="info-label">Status</div>
-                        <div class="info-value">
-                            {% if employee.is_active %}
-                            <span style="color: #10b981;"><i class="fas fa-circle me-1"></i>Faol</span>
-                            {% else %}
-                            <span style="color: #ef4444;"><i class="fas fa-circle me-1"></i>Nofaol</span>
-                            {% endif %}
+                        <div class="d-flex justify-content-between mb-3 pb-3 border-bottom">
+                            <span class="text-muted">Oylik maosh</span>
+                            <span class="fw-bold text-success">{{ employee.monthly_salary|floatformat:0 }} so'm</span>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Aloqa ma'lumotlari -->
-                <div class="info-card">
-                    <h3 class="card-title">Aloqa Ma'lumotlari</h3>
-                    
-                    <div class="info-row">
-                        <div class="info-label">Telefon</div>
-                        <div class="info-value">
-                            {% if employee.phone %}
-                            <a href="tel:{{ employee.phone }}" style="color: #4a6bff; text-decoration: none;">
-                                <i class="fas fa-phone me-1"></i>{{ employee.phone }}
-                            </a>
-                            {% else %}
-                            <span style="color: #999;">-</span>
-                            {% endif %}
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Qo'shilgan sana</span>
+                            <span class="fw-semibold">{{ employee.created_at|date:"d.m.Y" }}</span>
                         </div>
-                    </div>
-                    
-                    <div class="info-row">
-                        <div class="info-label">Email</div>
-                        <div class="info-value">
-                            {% if employee.email %}
-                            <a href="mailto:{{ employee.email }}" style="color: #4a6bff; text-decoration: none;">
-                                <i class="fas fa-envelope me-1"></i>{{ employee.email }}
-                            </a>
-                            {% else %}
-                            <span style="color: #999;">-</span>
-                            {% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="info-row">
-                        <div class="info-label">Qo'shilgan sana</div>
-                        <div class="info-value">{{ employee.created_at|date:"d.m.Y H:i" }}</div>
                     </div>
                 </div>
             </div>
-            
-            <!-- O'ng ustun -->
+
             <div class="col-md-6">
-                <!-- Davomat tarixi -->
-                <div class="info-card">
-                    <h3 class="card-title">So'nggi Davomatlar</h3>
-                    
-                    {% if attendances %}
-                    <div style="max-height: 400px; overflow-y: auto;">
-                        <table class="attendance-table">
-                            <thead>
-                                <tr>
-                                    <th>Sana</th>
-                                    <th>Vaqt</th>
-                                    <th>Holat</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for att in attendances %}
-                                <tr>
-                                    <td>{{ att.date|date:"d.m.Y" }}</td>
-                                    <td>{{ att.time|time:"H:i" }}</td>
-                                    <td>
-                                        {% if att.type == 'in' %}
-                                        <span class="status-badge status-in">
-                                            <i class="fas fa-sign-in-alt me-1"></i>Kelish
-                                        </span>
-                                        {% else %}
-                                        <span class="status-badge status-out">
-                                            <i class="fas fa-sign-out-alt me-1"></i>Chiqish
-                                        </span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="empty-state">
-                        <i class="fas fa-clipboard-list fa-2x mb-3"></i>
-                        <p>Davomat ma'lumotlari yo'q</p>
-                    </div>
-                    {% endif %}
-                    
-                    <!-- Tezkor harakatlar -->
-                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <a href="/checkin/" style="display: block; padding: 10px; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 8px; text-align: center; text-decoration: none; color: #0284c7;">
-                                    <i class="fas fa-sign-in-alt me-1"></i>Kelish
-                                </a>
-                            </div>
-                            <div class="col-6">
-                                <a href="/checkout/" style="display: block; padding: 10px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; text-align: center; text-decoration: none; color: #dc2626;">
-                                    <i class="fas fa-sign-out-alt me-1"></i>Chiqish
-                                </a>
-                            </div>
+                <div class="card mb-3">
+                    <div class="card-header"><i class="fas fa-history text-success me-2"></i>Davomat Tarixi</div>
+                    <div class="card-body p-0">
+                        {% if attendances %}
+                        <div style="max-height: 350px; overflow-y: auto;">
+                            <table class="table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Sana</th>
+                                        <th>Vaqt</th>
+                                        <th>Holat</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for att in attendances %}
+                                    <tr>
+                                        <td>{{ att.date|date:"d.m.Y" }}</td>
+                                        <td>{{ att.time|time:"H:i" }}</td>
+                                        <td>
+                                            {% if att.type == 'in' %}
+                                            <span class="badge badge-ontime"><i class="fas fa-sign-in-alt me-1"></i>Kelish</span>
+                                            {% else %}
+                                            <span class="badge badge-early"><i class="fas fa-sign-out-alt me-1"></i>Chiqish</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
+                        {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-clipboard-list fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">Davomat ma'lumotlari yo'q</p>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Harakat tugmalari -->
-        <div class="action-buttons">
-            <a href="/employees/" class="action-btn btn-back">
-                <i class="fas fa-list me-1"></i>Barcha Xodimlar
-            </a>
-            
-            <a href="/dashboard/" class="action-btn btn-back">
-                <i class="fas fa-tachometer-alt me-1"></i>Dashboard
-            </a>
-            
-            <a href="/employees/edit/{{ employee.id }}/" class="action-btn btn-edit">
-                <i class="fas fa-edit me-1"></i>Tahrirlash
-            </a>
-            
-            <button onclick="confirmDelete()" class="action-btn btn-delete">
-                <i class="fas fa-trash me-1"></i>O'chirish
-            </button>
+
+        <div class="d-flex flex-wrap gap-2 mt-3 fade-in delay-2">
+            <a href="{% url 'employee_list' %}" class="btn btn-light"><i class="fas fa-list me-1"></i>Barcha xodimlar</a>
+            <a href="{% url 'edit_employee' employee.id %}" class="btn btn-warning text-white"><i class="fas fa-edit me-1"></i>Tahrirlash</a>
         </div>
     </div>
 
-    <!-- JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-    function confirmDelete() {
-        if (confirm('{{ employee.full_name }} ni o\'chirmoqchimisiz?\nBu amalni ortga qaytarib bo\'lmaydi!')) {
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = '/employees/delete/{{ employee.id }}/';
-            
-            const csrfToken = document.createElement('input');
-            csrfToken.type = 'hidden';
-            csrfToken.name = 'csrfmiddlewaretoken';
-            csrfToken.value = '{{ csrf_token }}';
-            
-            form.appendChild(csrfToken);
-            document.body.appendChild(form);
-            form.submit();
-        }
-    }
-    
-    // Oddiy va tez yuklanadigan dizayn
-    document.addEventListener('DOMContentLoaded', function() {
-        // Faqat zarur funksiyalar
-        console.log('Profil sahifasi yuklandi');
-    });
-    </script>
+    <div class="toast-container" id="toastContainer"></div>
 
-    <!-- Service Worker -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.register("{% static 'js/service-worker.js' %}");
+        function showToast(message, type, duration) {
+            type = type || 'success';
+            duration = duration || 4000;
+            var container = document.getElementById('toastContainer');
+            var icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+            var toast = document.createElement('div');
+            toast.className = 'toast-item toast-' + type;
+            toast.innerHTML = '<i class="fas ' + (icons[type] || icons.info) + '"></i><span>' + message + '</span><button class="toast-close" onclick="this.parentElement.remove()"><i class="fas fa-times"></i></button>';
+            container.appendChild(toast);
+            setTimeout(function() {
+                toast.classList.add('toast-out');
+                setTimeout(function() { toast.remove(); }, 300);
+            }, duration);
         }
-      </script>
-  
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var msgContainer = document.getElementById('djangoMessages');
+            if (msgContainer) {
+                msgContainer.querySelectorAll('[data-toast-type]').forEach(function(item, index) {
+                    var type = item.getAttribute('data-toast-type');
+                    var message = item.getAttribute('data-toast-message');
+                    setTimeout(function() { showToast(message, type); }, index * 300);
+                });
+            }
+        });
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register("{% static 'js/service-worker.js' %}");
+        }
+    </script>
 </body>
 </html>

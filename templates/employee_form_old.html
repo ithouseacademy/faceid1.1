@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{% if employee %}Xodimni tahrirlash{% else %}Yangi xodim qo'shish{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0">
+  <div class="page-header fade-in">
+    <div>
+      <h1 class="h4 fw-bold mb-1"><i class="fas {% if is_add %}fa-user-plus{% else %}fa-user-edit{% endif %} text-primary me-2"></i>{% if is_add %}Yangi xodim qo'shish{% else %}Xodimni tahrirlash{% endif %}</h1>
+      <p class="small text-muted mb-0">Xodim ma'lumotlarini to'ldiring</p>
+    </div>
+    <a href="{% url 'employee_list' %}" class="btn btn-light"><i class="fas fa-arrow-left me-1"></i>Orqaga</a>
+  </div>
+
+  <form method="POST" enctype="multipart/form-data" class="fade-in delay-1">
+    {% csrf_token %}
+
+    {% if form.errors %}
+    <div class="alert alert-danger">
+      <i class="fas fa-exclamation-triangle me-2"></i>Quyidagi xatoliklar mavjud:
+      <ul class="mb-0 mt-2">
+        {% for field in form %}
+          {% for error in field.errors %}
+          <li>{{ field.label }}: {{ error }}</li>
+          {% endfor %}
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="card mb-4">
+          <div class="card-header"><i class="fas fa-user me-2 text-primary"></i>Shaxsiy ma'lumotlar</div>
+          <div class="card-body">
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label class="form-label fw-semibold">Ism <span class="text-danger">*</span></label>
+                <input type="text" name="first_name" class="form-control" value="{% if form.first_name.value %}{{ form.first_name.value }}{% elif employee %}{{ employee.first_name }}{% endif %}" required placeholder="Ali">
+              </div>
+              <div class="col-6">
+                <label class="form-label fw-semibold">Familya <span class="text-danger">*</span></label>
+                <input type="text" name="last_name" class="form-control" value="{% if form.last_name.value %}{{ form.last_name.value }}{% elif employee %}{{ employee.last_name }}{% endif %}" required placeholder="Valiyev">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Lavozim <span class="text-danger">*</span></label>
+              <input type="text" name="position" class="form-control" value="{% if form.position.value %}{{ form.position.value }}{% elif employee %}{{ employee.position }}{% endif %}" required placeholder="Dasturchi">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Bo'lim <span class="text-danger">*</span></label>
+              <input type="text" name="department" class="form-control" value="{% if form.department.value %}{{ form.department.value }}{% elif employee %}{{ employee.department }}{% endif %}" required placeholder="IT bo'limi">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Telefon</label>
+              <input type="tel" name="phone" class="form-control" value="{% if form.phone.value %}{{ form.phone.value }}{% elif employee %}{{ employee.phone }}{% endif %}" placeholder="+998901234567">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Email</label>
+              <input type="email" name="email" class="form-control" value="{% if form.email.value %}{{ form.email.value }}{% elif employee %}{{ employee.email }}{% endif %}" placeholder="ali@mail.com">
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header"><i class="fas fa-camera me-2 text-warning"></i>Rasm</div>
+          <div class="card-body">
+            {% if not is_add and employee.get_image_url %}
+            <div class="mb-3 text-center">
+              <p class="mb-2 text-muted">Joriy rasm:</p>
+              <img src="{{ employee.get_image_url }}" class="rounded" width="120" height="120" style="object-fit:cover;">
+            </div>
+            {% endif %}
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Rasm yuklash {% if is_add %}<span class="text-danger">*</span>{% endif %}</label>
+              <input type="file" name="photo" class="form-control" accept="image/*" {% if is_add %}required{% endif %}>
+              <small class="text-muted">Yuz aniq ko'rinadigan sifatli rasm tanlang</small>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card mb-4">
+          <div class="card-header"><i class="fas fa-money-bill-wave me-2 text-success"></i>Maosh va jarimalar</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Oylik maosh (so'm) <span class="text-danger">*</span></label>
+              <input type="number" name="monthly_salary" class="form-control" value="{% if form.monthly_salary.value %}{{ form.monthly_salary.value }}{% elif employee %}{{ employee.monthly_salary }}{% endif %}" required min="0" step="10000" placeholder="5000000">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Kechikish jarimasi (so'm/daq)</label>
+              <input type="number" name="late_penalty_per_minute" class="form-control" value="{% if form.late_penalty_per_minute.value %}{{ form.late_penalty_per_minute.value }}{% elif employee %}{{ employee.late_penalty_per_minute }}{% else %}1000{% endif %}" min="0" step="100">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Ruxsat etilgan kechikish (daq)</label>
+              <input type="number" name="allowed_late_minutes" class="form-control" value="{% if form.allowed_late_minutes.value %}{{ form.allowed_late_minutes.value }}{% elif employee %}{{ employee.allowed_late_minutes }}{% else %}10{% endif %}" min="0">
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Kunlik ish soatlari</label>
+              <input type="number" name="daily_work_hours" class="form-control" value="{% if form.daily_work_hours.value %}{{ form.daily_work_hours.value }}{% elif employee %}{{ employee.daily_work_hours }}{% else %}8{% endif %}" min="1" max="24" step="0.5">
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header"><i class="fas fa-pen me-2 text-secondary"></i>Izoh</div>
+          <div class="card-body">
+            <div class="mb-3">
+              <label class="form-label fw-semibold">Izoh (qo'shimcha ma'lumot)</label>
+              <textarea name="notes" class="form-control" rows="3" placeholder="Xodim haqida qo'shimcha ma'lumot...">{% if form.notes.value %}{{ form.notes.value }}{% elif employee %}{{ employee.notes }}{% endif %}</textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mb-4">
+          <div class="card-header"><i class="fas fa-calendar-alt me-2 text-info"></i>Ish jadvali</div>
+          <div class="card-body">
+            <label class="form-label fw-semibold mb-3">Ish kunlari <span class="text-danger">*</span></label>
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <div class="form-check">
+                  <input type="checkbox" name="monday" class="form-check-input" id="day_monday" {% if not is_add and 'monday' in employee.work_days or is_add %}checked{% endif %}>
+                  <label class="form-check-label small" for="day_monday">Dushanba</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input type="checkbox" name="tuesday" class="form-check-input" id="day_tuesday" {% if not is_add and 'tuesday' in employee.work_days or is_add %}checked{% endif %}>
+                  <label class="form-check-label small" for="day_tuesday">Seshanba</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input type="checkbox" name="wednesday" class="form-check-input" id="day_wednesday" {% if not is_add and 'wednesday' in employee.work_days or is_add %}checked{% endif %}>
+                  <label class="form-check-label small" for="day_wednesday">Chorshanba</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input type="checkbox" name="thursday" class="form-check-input" id="day_thursday" {% if not is_add and 'thursday' in employee.work_days or is_add %}checked{% endif %}>
+                  <label class="form-check-label small" for="day_thursday">Payshanba</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input type="checkbox" name="friday" class="form-check-input" id="day_friday" {% if not is_add and 'friday' in employee.work_days or is_add %}checked{% endif %}>
+                  <label class="form-check-label small" for="day_friday">Juma</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input type="checkbox" name="saturday" class="form-check-input" id="day_saturday" {% if not is_add and 'saturday' in employee.work_days %}checked{% endif %}>
+                  <label class="form-check-label small" for="day_saturday">Shanba</label>
+                </div>
+              </div>
+              <div class="col-6">
+                <div class="form-check">
+                  <input type="checkbox" name="sunday" class="form-check-input" id="day_sunday" {% if not is_add and 'sunday' in employee.work_days %}checked{% endif %}>
+                  <label class="form-check-label small" for="day_sunday">Yakshanba</label>
+                </div>
+              </div>
+            </div>
+
+            <label class="form-label fw-semibold mb-3">Ish vaqtlari</label>
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label small text-muted">Dushanba boshlash</label>
+                <input type="time" name="start_time_monday" class="form-control" value="{% if employee.work_schedule.monday.start %}{{ employee.work_schedule.monday.start }}{% else %}09:00{% endif %}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Dushanba tugash</label>
+                <input type="time" name="end_time_monday" class="form-control" value="{% if employee.work_schedule.monday.end %}{{ employee.work_schedule.monday.end }}{% else %}18:00{% endif %}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Seshanba boshlash</label>
+                <input type="time" name="start_time_tuesday" class="form-control" value="{% if employee.work_schedule.tuesday.start %}{{ employee.work_schedule.tuesday.start }}{% else %}09:00{% endif %}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Seshanba tugash</label>
+                <input type="time" name="end_time_tuesday" class="form-control" value="{% if employee.work_schedule.tuesday.end %}{{ employee.work_schedule.tuesday.end }}{% else %}18:00{% endif %}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Chorshanba boshlash</label>
+                <input type="time" name="start_time_wednesday" class="form-control" value="{% if employee.work_schedule.wednesday.start %}{{ employee.work_schedule.wednesday.start }}{% else %}09:00{% endif %}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Chorshanba tugash</label>
+                <input type="time" name="end_time_wednesday" class="form-control" value="{% if employee.work_schedule.wednesday.end %}{{ employee.work_schedule.wednesday.end }}{% else %}18:00{% endif %}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Payshanba boshlash</label>
+                <input type="time" name="start_time_thursday" class="form-control" value="{% if employee.work_schedule.thursday.start %}{{ employee.work_schedule.thursday.start }}{% else %}09:00{% endif %}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Payshanba tugash</label>
+                <input type="time" name="end_time_thursday" class="form-control" value="{% if employee.work_schedule.thursday.end %}{{ employee.work_schedule.thursday.end }}{% else %}18:00{% endif %}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Juma boshlash</label>
+                <input type="time" name="start_time_friday" class="form-control" value="{% if employee.work_schedule.friday.start %}{{ employee.work_schedule.friday.start }}{% else %}09:00{% endif %}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Juma tugash</label>
+                <input type="time" name="end_time_friday" class="form-control" value="{% if employee.work_schedule.friday.end %}{{ employee.work_schedule.friday.end }}{% else %}18:00{% endif %}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Shanba boshlash</label>
+                <input type="time" name="start_time_saturday" class="form-control" value="{% if employee.work_schedule.saturday.start %}{{ employee.work_schedule.saturday.start }}{% else %}09:00{% endif %}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Shanba tugash</label>
+                <input type="time" name="end_time_saturday" class="form-control" value="{% if employee.work_schedule.saturday.end %}{{ employee.work_schedule.saturday.end }}{% else %}18:00{% endif %}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Yakshanba boshlash</label>
+                <input type="time" name="start_time_sunday" class="form-control" value="{% if employee.work_schedule.sunday.start %}{{ employee.work_schedule.sunday.start }}{% else %}09:00{% endif %}">
+              </div>
+              <div class="col-6">
+                <label class="form-label small text-muted">Yakshanba tugash</label>
+                <input type="time" name="end_time_sunday" class="form-control" value="{% if employee.work_schedule.sunday.end %}{{ employee.work_schedule.sunday.end }}{% else %}18:00{% endif %}">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-3">
+      <a href="{% url 'employee_list' %}" class="btn btn-light"><i class="fas fa-times me-1"></i>Bekor qilish</a>
+      <button type="submit" class="btn btn-primary"><i class="fas fa-save me-1"></i>Saqlash</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

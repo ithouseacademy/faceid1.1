@@ -4,6 +4,13 @@ from django import template
 register = template.Library()
 
 @register.filter
+def get_item(dictionary, key):
+    """Dictionary dan kalit bo'yicha qiymat olish"""
+    if dictionary is None:
+        return None
+    return dictionary.get(key)
+
+@register.filter
 def format_minutes(minutes):
     """Daqiqalarni soat va daqiqaga formatlash: 96 -> 1s 36da"""
     try:
