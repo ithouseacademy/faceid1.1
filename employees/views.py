@@ -1181,7 +1181,7 @@ def daily_attendance_report(request):
 @admin_or_hr_required
 def weekly_attendance_report(request):
     """Haftalik hisobot - admin yoki HR uchun"""
-    today = date.today()
+    today = timezone.now().date()
     start_of_week = today - timedelta(days=today.weekday())
     end_of_week = start_of_week + timedelta(days=6)
 
@@ -1195,11 +1195,8 @@ def weekly_attendance_report(request):
         start_date = start_of_week
         end_date = end_of_week
 
-    # Hafta kunlari nomlarini ingliz tilidan o'zbek tiliga moslashtirish
-    DAY_NAME_UZ = {
-        'monday': 'Dushanba', 'tuesday': 'Seshanba', 'wednesday': 'Chorshanba',
-        'thursday': 'Payshanba', 'friday': 'Juma', 'saturday': 'Shanba', 'sunday': 'Yakshanba'
-    }
+    if start_date > end_date:
+        start_date, end_date = end_date, start_date
 
     all_attendances = Attendance.objects.filter(
         date__gte=start_date,
@@ -1209,14 +1206,10 @@ def weekly_attendance_report(request):
     employees = Employee.objects.filter(is_active=True)
     weekly_stats = []
 
-    # HAFTA KUNLARI RO'YXATI - BU MUHIM QISM!
     week_days = []
     current = start_date
-    day_names = ['Dushanba', 'Seshanba', 'Chorshanba', 'Payshanba', 'Juma', 'Shanba', 'Yakshanba']
-
-    for i, name in enumerate(day_names):
+    while current <= end_date:
         week_days.append({
-            'name': name,
             'date': current
         })
         current += timedelta(days=1)
@@ -1233,17 +1226,16 @@ def weekly_attendance_report(request):
         current_date = start_date
 
         while current_date <= end_date:
-            day_name = DAY_NAME_UZ.get(current_date.strftime('%A').lower(), current_date.strftime('%A'))
+            day_key = current_date.isoformat()
             day_checkin = employee_checkins.filter(date=current_date).first()
 
             if day_checkin:
                 day_checkout = employee_checkouts.filter(date=current_date).first()
 
-                # Kechikishni soat va daqiqaga ajratish
                 late_hours = day_checkin.late_minutes // 60
                 late_minutes = day_checkin.late_minutes % 60
 
-                days_data[day_name] = {
+                days_data[day_key] = {
                     'checkin': day_checkin.time,
                     'checkout': day_checkout.time if day_checkout else None,
                     'checkin_display': day_checkin.date.strftime('%d.%m.%Y') + ' ' + day_checkin.time.strftime('%H:%M'),
@@ -1254,7 +1246,7 @@ def weekly_attendance_report(request):
                     'late_minutes_remainder': late_minutes,
                 }
             else:
-                days_data[day_name] = None
+                days_data[day_key] = None
 
             current_date += timedelta(days=1)
 
@@ -1270,7 +1262,6 @@ def weekly_attendance_report(request):
 
     total_present = sum(s['present_days'] for s in weekly_stats)
     total_late = sum(s['late_days'] for s in weekly_stats)
-    total_absent = sum(max(0, employee.get_work_days_count(start_date.year if start_date.year == end_date.year else None, start_date.month) - employee.get_present_days_count(start_date.year, start_date.month)) for employee in employees)
 
     context = {
         'start_date': start_date,
@@ -2204,58 +2195,80 @@ def location_list(request):
 
 
 @login_required
-@admin_only_required
+@admin_or_hr_required
 def location_add(request):
     if request.method == 'POST':
-        name = request.POST.get('name')
-        building = request.POST.get('building')
-        address = request.POST.get('address')
-        latitude = request.POST.get('latitude')
-        longitude = request.POST.get('longitude')
-        radius_meters = request.POST.get('radius_meters', 100)
-        branch_name = request.POST.get('branch_name', '')
+        name = request.POST.get('name', '').strip()
+        building = request.POST.get('building', '').strip()
+        address = request.POST.get('address', '').strip()
+        latitude = request.POST.get('latitude', '').strip().replace(',', '.')
+        longitude = request.POST.get('longitude', '').strip().replace(',', '.')
+        radius_meters = request.POST.get('radius_meters', '100').strip()
+        branch_name = request.POST.get('branch_name', '').strip()
         is_active = request.POST.get('is_active') == 'on'
 
-        Location.objects.create(
-            name=name, building=building, address=address,
-            latitude=latitude or None, longitude=longitude or None,
-            radius_meters=radius_meters, branch_name=branch_name,
-            is_active=is_active
-        )
-        messages.success(request, 'Lokatsiya qo\'shildi!')
-        return redirect('location_list')
+        if not name or not building or not address:
+            messages.error(request, 'Lokatsiya nomi, bino nomi va manzil maydonlari majburiy!')
+            return render(request, 'location_form.html', {'location': None})
+
+        try:
+            Location.objects.create(
+                name=name, building=building, address=address,
+                latitude=latitude or None, longitude=longitude or None,
+                radius_meters=int(radius_meters) if radius_meters else 100,
+                branch_name=branch_name, is_active=is_active
+            )
+            messages.success(request, 'Lokatsiya qo\'shildi!')
+            return redirect('location_list')
+        except Exception as e:
+            messages.error(request, f'Lokatsiya qo\'shishda xatolik: {str(e)}')
+            return render(request, 'location_form.html', {'location': None})
 
     return render(request, 'location_form.html', {'location': None})
 
 
 @login_required
-@admin_only_required
+@admin_or_hr_required
 def location_edit(request, id):
     location = get_object_or_404(Location, id=id)
     if request.method == 'POST':
-        location.name = request.POST.get('name')
-        location.building = request.POST.get('building')
-        location.address = request.POST.get('address')
-        location.latitude = request.POST.get('latitude') or None
-        location.longitude = request.POST.get('longitude') or None
-        location.radius_meters = request.POST.get('radius_meters', 100)
-        location.branch_name = request.POST.get('branch_name', '')
-        location.is_active = request.POST.get('is_active') == 'on'
-        location.save()
-        messages.success(request, 'Lokatsiya yangilandi!')
-        return redirect('location_list')
+        name = request.POST.get('name', '').strip()
+        building = request.POST.get('building', '').strip()
+        address = request.POST.get('address', '').strip()
+
+        if not name or not building or not address:
+            messages.error(request, 'Lokatsiya nomi, bino nomi va manzil maydonlari majburiy!')
+            return render(request, 'location_form.html', {'location': location})
+
+        try:
+            location.name = name
+            location.building = building
+            location.address = address
+            location.latitude = request.POST.get('latitude', '').strip().replace(',', '.') or None
+            location.longitude = request.POST.get('longitude', '').strip().replace(',', '.') or None
+            location.radius_meters = int(request.POST.get('radius_meters', '100').strip() or 100)
+            location.branch_name = request.POST.get('branch_name', '').strip()
+            location.is_active = request.POST.get('is_active') == 'on'
+            location.save()
+            messages.success(request, 'Lokatsiya yangilandi!')
+            return redirect('location_list')
+        except Exception as e:
+            messages.error(request, f'Lokatsiyani tahrirlashda xatolik: {str(e)}')
+            return render(request, 'location_form.html', {'location': location})
 
     return render(request, 'location_form.html', {'location': location})
 
 
-@csrf_exempt
 @login_required
-@admin_only_required
+@admin_or_hr_required
 def location_delete(request, id):
     if request.method == 'POST':
         location = get_object_or_404(Location, id=id)
         location.delete()
-        return JsonResponse({'status': 'success'})
+        messages.success(request, f'Lokatsiya o\'chirildi!')
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return JsonResponse({'status': 'success'})
+        return redirect('location_list')
     return JsonResponse({'status': 'error', 'message': 'Faqat POST'}, status=405)
 
 

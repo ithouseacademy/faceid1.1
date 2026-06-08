@@ -59,6 +59,7 @@
               </td>
               <td>
                 <a href="{% url 'location_edit' loc.id %}" class="btn btn-outline-warning btn-sm" title="Tahrirlash"><i class="fas fa-edit"></i></a>
+                <button type="button" class="btn btn-outline-danger btn-sm" title="O'chirish" onclick="confirmDelete({{ loc.id }}, '{{ loc.name|escapejs }}')"><i class="fas fa-trash"></i></button>
               </td>
             </tr>
             {% endfor %}
@@ -86,6 +87,22 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+function confirmDelete(id, name) {
+  if (confirm('"' + name + '" lokatsiyasini ochirishni tasdiqlaysizmi?')) {
+    var form = document.createElement('form');
+    form.method = 'POST';
+    form.action = "{% url 'location_delete' 0 %}".replace('0', id);
+    form.style.display = 'none';
+    var csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = 'csrfmiddlewaretoken';
+    csrf.value = '{{ csrf_token }}';
+    form.appendChild(csrf);
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   var locations = {{ locations_json|safe }};
   var hasValid = locations.some(function(l) { return l.lat && l.lng; });

@@ -24,11 +24,15 @@
     <div class="card mb-4 no-print">
         <div class="card-body">
             <form method="GET" class="row g-3 align-items-end">
-                <div class="col-md-4">
-                    <label class="form-label">Hafta boshlanish sanasi</label>
+                <div class="col-md-3">
+                    <label class="form-label">Boshlanish sanasi</label>
                     <input type="date" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
                 </div>
                 <div class="col-md-3">
+                    <label class="form-label">Tugash sanasi</label>
+                    <input type="date" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-2">
                     <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search me-1"></i>Ko'rish</button>
                 </div>
                 <div class="col-md-5 text-end">
@@ -78,7 +82,7 @@
                             <th style="min-width:180px;">Xodim</th>
                             {% for day_data in week_days %}
                             <th class="text-center" style="min-width:130px;">
-                                <div class="fw-bold">{{ day_data.name|slice:":2" }}</div>
+                                <div class="fw-bold">{{ day_data.date|date:"D"|slice:":2" }}</div>
                                 <small>{{ day_data.date|date:"d.m.Y" }}</small>
                             </th>
                             {% endfor %}
@@ -104,7 +108,7 @@
                             </td>
                             {% for day_data in week_days %}
                             <td class="text-center align-middle">
-                            {% with day_key=day_data.date|date:"l" %}
+                            {% with day_key=day_data.date|date:"Y-m-d" %}
                             {% with day_info=stat.days_data|get_item:day_key %}
                                 {% if day_info %}
                                     {% if day_info.status == 'ontime' %}
@@ -144,20 +148,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const input = document.querySelector('input[name="start_date"]');
-    if (input && !input.value) {
-        const today = new Date();
-        const day = today.getDay();
-        const diff = day === 0 ? 6 : day - 1;
-        const monday = new Date(today);
-        monday.setDate(today.getDate() - diff);
-        input.value = monday.toISOString().split('T')[0];
-    }
-});
-</script>
 {% endblock %}
